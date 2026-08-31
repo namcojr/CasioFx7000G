@@ -28,6 +28,10 @@ import com.retro.fx7000g.calc.CalcAction
 import com.retro.fx7000g.calc.CalculatorState
 
 private const val INV = "\u207B\u00B9" // superscript "-1"
+private const val ROOT = "\u02E3\u221A" // x-th root  (ˣ√)
+private const val DEG = "\u00B0"        // degrees
+private const val MIN = "\u2032"        // arc-minutes
+private const val SEC = "\u2033"        // arc-seconds
 
 /** Specification for a single physical key. */
 private data class KeySpec(
@@ -36,10 +40,17 @@ private data class KeySpec(
     val color: Color,
     val shiftLabel: String? = null,
     val shifted: CalcAction? = null,
+    val alphaLabel: String? = null,
+    val alphaAction: CalcAction? = null,
+    val hyp: Boolean = false,
     val weight: Float = 1f
 )
 
 private fun ins(text: String) = CalcAction.Insert(text)
+
+/** A key that also carries an ALPHA-layer letter. */
+private fun KeySpec.withAlpha(letter: String): KeySpec =
+    copy(alphaLabel = letter, alphaAction = ins(letter))
 
 /** A keypad row: its keys plus how tall it is relative to the number rows. */
 private data class KeyRow(
@@ -58,38 +69,40 @@ private fun keypad(): List<KeyRow> = listOf(
         compact = true, heightWeight = FUNC_ROW,
         keys = listOf(
             KeySpec("SHIFT", CalcAction.ToggleShift, Fx7000gColors.KeyShift),
-            KeySpec("MODE", CalcAction.CycleMode, Fx7000gColors.KeyFunction),
+            KeySpec("ALPHA", CalcAction.ToggleAlpha, Fx7000gColors.KeyAlpha),
+            KeySpec("hyp", CalcAction.ToggleHyp, Fx7000gColors.KeyFunction),
+            KeySpec("MODE", CalcAction.CycleMode, Fx7000gColors.KeyFunction, "SET", CalcAction.OpenModeMenu),
             KeySpec("DEL", CalcAction.Delete, Fx7000gColors.KeyFunction),
-            KeySpec("AC", CalcAction.Clear, Fx7000gColors.KeyAc, weight = 2f)
+            KeySpec("AC", CalcAction.Clear, Fx7000gColors.KeyAc)
         )
     ),
     KeyRow(
         compact = true, heightWeight = FUNC_ROW,
         keys = listOf(
-            KeySpec("sin", ins("sin("), Fx7000gColors.KeyFunction, "sin$INV", ins("sin$INV(")),
-            KeySpec("cos", ins("cos("), Fx7000gColors.KeyFunction, "cos$INV", ins("cos$INV(")),
-            KeySpec("tan", ins("tan("), Fx7000gColors.KeyFunction, "tan$INV", ins("tan$INV(")),
-            KeySpec("(", ins("("), Fx7000gColors.KeyFunction),
-            KeySpec(")", ins(")"), Fx7000gColors.KeyFunction)
+            KeySpec("sin", ins("sin("), Fx7000gColors.KeyFunction, "sin$INV", ins("sin$INV("), hyp = true).withAlpha("L"),
+            KeySpec("cos", ins("cos("), Fx7000gColors.KeyFunction, "cos$INV", ins("cos$INV("), hyp = true).withAlpha("N"),
+            KeySpec("tan", ins("tan("), Fx7000gColors.KeyFunction, "tan$INV", ins("tan$INV("), hyp = true).withAlpha("O"),
+            KeySpec("(", ins("("), Fx7000gColors.KeyFunction).withAlpha("P"),
+            KeySpec(")", ins(")"), Fx7000gColors.KeyFunction, ",", ins(",")).withAlpha("Q")
         )
     ),
     KeyRow(
         compact = true, heightWeight = FUNC_ROW,
         keys = listOf(
-            KeySpec("log", ins("log("), Fx7000gColors.KeyFunction, "10\u02E3", ins("10^(")),
-            KeySpec("ln", ins("ln("), Fx7000gColors.KeyFunction, "e\u02E3", ins("e^(")),
-            KeySpec("x\u00B2", ins("\u00B2"), Fx7000gColors.KeyFunction),
-            KeySpec("x\u02B8", ins("^"), Fx7000gColors.KeyFunction),
-            KeySpec("\u221A", ins("\u221A("), Fx7000gColors.KeyFunction)
+            KeySpec("log", ins("log("), Fx7000gColors.KeyFunction, "10\u02E3", ins("10^(")).withAlpha("R"),
+            KeySpec("ln", ins("ln("), Fx7000gColors.KeyFunction, "e\u02E3", ins("e^(")).withAlpha("S"),
+            KeySpec("x\u00B2", ins("\u00B2"), Fx7000gColors.KeyFunction, ROOT, ins(ROOT)).withAlpha("T"),
+            KeySpec("x\u02B8", ins("^"), Fx7000gColors.KeyFunction, "x$INV", ins(INV)).withAlpha("U"),
+            KeySpec("\u221A", ins("\u221A("), Fx7000gColors.KeyFunction, "Rng", CalcAction.Range).withAlpha("V")
         )
     ),
     KeyRow(
         compact = true, heightWeight = FUNC_ROW,
         keys = listOf(
-            KeySpec("x!", ins("!"), Fx7000gColors.KeyFunction),
-            KeySpec("Abs", ins("Abs("), Fx7000gColors.KeyFunction),
-            KeySpec("Int", ins("Int("), Fx7000gColors.KeyFunction),
-            KeySpec("Frac", ins("Frac("), Fx7000gColors.KeyFunction),
+            KeySpec("x!", ins("!"), Fx7000gColors.KeyFunction).withAlpha("W"),
+            KeySpec("Abs", ins("Abs("), Fx7000gColors.KeyFunction, SEC, ins(SEC)).withAlpha("Y"),
+            KeySpec("Int", ins("Int("), Fx7000gColors.KeyFunction, DEG, ins(DEG)),
+            KeySpec("Frac", ins("Frac("), Fx7000gColors.KeyFunction, MIN, ins(MIN)),
             KeySpec("X", ins("X"), Fx7000gColors.KeyFunction, "\u2192", ins("\u2192"))
         )
     ),
@@ -100,15 +113,15 @@ private fun keypad(): List<KeyRow> = listOf(
             KeySpec("HEX", CalcAction.ConvertBase(16), Fx7000gColors.KeyBase, "or", ins("or")),
             KeySpec("BIN", CalcAction.ConvertBase(2), Fx7000gColors.KeyBase, "xor", ins("xor")),
             KeySpec("OCT", CalcAction.ConvertBase(8), Fx7000gColors.KeyBase, "Not", ins("Not")),
-            KeySpec("Graph", CalcAction.Graph, Fx7000gColors.KeyFunction, "Range", CalcAction.Range)
+            KeySpec("Graph", CalcAction.Graph, Fx7000gColors.KeyFunction, "Bltin", CalcAction.OpenPresets)
         )
     ),
     KeyRow(
         heightWeight = NUM_ROW,
         keys = listOf(
-            KeySpec("7", ins("7"), Fx7000gColors.KeyNumber, "A", ins("A")),
-            KeySpec("8", ins("8"), Fx7000gColors.KeyNumber, "B", ins("B")),
-            KeySpec("9", ins("9"), Fx7000gColors.KeyNumber, "C", ins("C")),
+            KeySpec("7", ins("7"), Fx7000gColors.KeyNumber, "nPr", ins("nPr")).withAlpha("A"),
+            KeySpec("8", ins("8"), Fx7000gColors.KeyNumber, "nCr", ins("nCr")).withAlpha("B"),
+            KeySpec("9", ins("9"), Fx7000gColors.KeyNumber, "Ran#", ins("Ran#")).withAlpha("C"),
             KeySpec("\u00F7", ins("\u00F7"), Fx7000gColors.KeyOperator),
             KeySpec("\u00D7", ins("\u00D7"), Fx7000gColors.KeyOperator)
         )
@@ -116,9 +129,9 @@ private fun keypad(): List<KeyRow> = listOf(
     KeyRow(
         heightWeight = NUM_ROW,
         keys = listOf(
-            KeySpec("4", ins("4"), Fx7000gColors.KeyNumber, "D", ins("D")),
-            KeySpec("5", ins("5"), Fx7000gColors.KeyNumber, "E", ins("E")),
-            KeySpec("6", ins("6"), Fx7000gColors.KeyNumber, "F", ins("F")),
+            KeySpec("4", ins("4"), Fx7000gColors.KeyNumber, "Pol", ins("Pol(")).withAlpha("D"),
+            KeySpec("5", ins("5"), Fx7000gColors.KeyNumber, "Rec", ins("Rec(")).withAlpha("E"),
+            KeySpec("6", ins("6"), Fx7000gColors.KeyNumber, "%", ins("%")).withAlpha("F"),
             KeySpec("\u2212", ins("\u2212"), Fx7000gColors.KeyOperator),
             KeySpec("+", ins("+"), Fx7000gColors.KeyOperator)
         )
@@ -126,21 +139,21 @@ private fun keypad(): List<KeyRow> = listOf(
     KeyRow(
         heightWeight = NUM_ROW,
         keys = listOf(
-            KeySpec("1", ins("1"), Fx7000gColors.KeyNumber),
-            KeySpec("2", ins("2"), Fx7000gColors.KeyNumber),
-            KeySpec("3", ins("3"), Fx7000gColors.KeyNumber),
-            KeySpec("\u03C0", ins("\u03C0"), Fx7000gColors.KeyFunction, "e", ins("e")),
-            KeySpec("EXP", ins("E"), Fx7000gColors.KeyFunction)
+            KeySpec("1", ins("1"), Fx7000gColors.KeyNumber).withAlpha("G"),
+            KeySpec("2", ins("2"), Fx7000gColors.KeyNumber).withAlpha("H"),
+            KeySpec("3", ins("3"), Fx7000gColors.KeyNumber).withAlpha("I"),
+            KeySpec("\u03C0", ins("\u03C0"), Fx7000gColors.KeyFunction, "e", ins("e")).withAlpha("J"),
+            KeySpec("EXP", ins("E"), Fx7000gColors.KeyFunction).withAlpha("K")
         )
     ),
     KeyRow(
         heightWeight = NUM_ROW,
         keys = listOf(
-            KeySpec("0", ins("0"), Fx7000gColors.KeyNumber),
+            KeySpec("0", ins("0"), Fx7000gColors.KeyNumber).withAlpha("Z"),
             KeySpec(".", ins("."), Fx7000gColors.KeyNumber),
             KeySpec("(-)", ins("\u2212"), Fx7000gColors.KeyNumber),
             KeySpec("Ans", ins("Ans"), Fx7000gColors.KeyFunction),
-            KeySpec("M+", CalcAction.MemoryAdd, Fx7000gColors.KeyFunction, "M", ins("M"))
+            KeySpec("M+", CalcAction.MemoryAdd, Fx7000gColors.KeyFunction, "M", ins("M")).withAlpha("M")
         )
     ),
     KeyRow(
@@ -170,12 +183,10 @@ fun Keypad(state: CalculatorState, modifier: Modifier = Modifier) {
                     KeyButton(
                         key = key,
                         shiftActive = state.shift,
+                        alphaActive = state.alpha,
+                        hypActive = state.hyp,
                         compact = row.compact,
-                        onClick = {
-                            val action = if (state.shift && key.shifted != null) key.shifted
-                            else key.primary
-                            state.onAction(action)
-                        },
+                        onClick = { state.onAction(resolveAction(key, state)) },
                         modifier = Modifier
                             .weight(key.weight)
                             .fillMaxHeight()
@@ -190,14 +201,23 @@ fun Keypad(state: CalculatorState, modifier: Modifier = Modifier) {
 private fun KeyButton(
     key: KeySpec,
     shiftActive: Boolean,
+    alphaActive: Boolean,
+    hypActive: Boolean,
     compact: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val highlighted = shiftActive && key.shifted != null
+    val shiftHi = shiftActive && key.shifted != null
+    val alphaHi = alphaActive && key.alphaAction != null
+    val hypHi = hypActive && key.hyp
     val view = LocalView.current
     Surface(
-        color = key.color,
+        color = when {
+            hypHi -> Fx7000gColors.KeyShift
+            shiftHi -> Fx7000gColors.KeyShift.copy(alpha = 0.55f)
+            alphaHi -> Fx7000gColors.KeyAlpha.copy(alpha = 0.55f)
+            else -> key.color
+        },
         shape = RoundedCornerShape(if (compact) 5.dp else 7.dp),
         border = BorderStroke(1.dp, Fx7000gColors.KeyBorder),
         modifier = modifier.clickable {
@@ -218,7 +238,7 @@ private fun KeyButton(
                 if (key.shiftLabel != null) {
                     Text(
                         text = key.shiftLabel,
-                        color = if (highlighted) Color.White else Fx7000gColors.KeyShiftLegend,
+                        color = if (shiftHi) Color.White else Fx7000gColors.KeyShiftLegend,
                         fontSize = if (compact) 7.sp else 9.sp,
                         fontFamily = FontFamily.SansSerif,
                         textAlign = TextAlign.Center
@@ -232,7 +252,30 @@ private fun KeyButton(
                     fontFamily = FontFamily.SansSerif,
                     textAlign = TextAlign.Center
                 )
+                if (key.alphaLabel != null) {
+                    Text(
+                        text = key.alphaLabel,
+                        color = if (alphaHi) Color.White else Fx7000gColors.KeyAlphaLegend,
+                        fontSize = if (compact) 7.sp else 9.sp,
+                        fontFamily = FontFamily.SansSerif,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
     }
 }
+
+/** Chooses which action a key press produces given the active prefixes. */
+private fun resolveAction(key: KeySpec, state: CalculatorState): CalcAction = when {
+    state.alpha && key.alphaAction != null -> key.alphaAction!!
+    state.hyp && key.hyp -> {
+        val base = key.label // "sin" / "cos" / "tan"
+        if (state.shift) ins("$base$H_INV(") else ins("${base}h(")
+    }
+    state.shift && key.shifted != null -> key.shifted!!
+    else -> key.primary
+}
+
+private const val H_INV = "h\u207B\u00B9" // e.g. sinh⁻¹
+

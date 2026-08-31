@@ -24,7 +24,9 @@ object Fx7000gColors {
     val KeyAc = Color(0xFF8A2B2B)
     val KeyExe = Color(0xFF2F5B8A)
     val KeyShift = Color(0xFFB07A2A)
+    val KeyAlpha = Color(0xFF7A3B8A)
     val KeyText = Color(0xFFF2F2F2)
     val KeyShiftLegend = Color(0xFFE0A63A)
+    val KeyAlphaLegend = Color(0xFFCF8FE0)
     val KeyBorder = Color(0xFF17181B)
 }

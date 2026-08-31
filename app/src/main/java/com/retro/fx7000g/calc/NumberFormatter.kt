@@ -13,6 +13,25 @@ object NumberFormatter {
 
     private const val SIG_DIGITS = 10
 
+    /** Selectable output style, mirroring the FX-7000G's Norm / Fix / Sci modes. */
+    sealed interface DisplayFormat {
+        object Norm : DisplayFormat
+        /** Fixed number of decimal places (0–9). */
+        data class Fix(val decimals: Int) : DisplayFormat
+        /** Scientific notation with a fixed number of significant digits (1–10). */
+        data class Sci(val digits: Int) : DisplayFormat
+    }
+
+    fun format(value: Double, format: DisplayFormat = DisplayFormat.Norm): String {
+        if (value.isNaN() || value.isInfinite()) throw CalcError("range")
+        if (abs(value) >= 1e100) throw CalcError("overflow")
+        return when (format) {
+            is DisplayFormat.Fix -> fixed(value, format.decimals)
+            is DisplayFormat.Sci -> scientific(value, format.digits)
+            DisplayFormat.Norm -> format(value)
+        }
+    }
+
     fun format(value: Double): String {
         if (value == 0.0) return "0"
         if (value.isNaN() || value.isInfinite()) throw CalcError("range")
@@ -28,6 +47,33 @@ object NumberFormatter {
         } else {
             plain(rounded)
         }
+    }
+
+    /** Fix mode: exactly [decimals] digits after the point. */
+    private fun fixed(value: Double, decimals: Int): String {
+        val d = decimals.coerceIn(0, 9)
+        val bd = BigDecimal(value).setScale(d, RoundingMode.HALF_UP)
+        // Avoid an ugly "-0.00".
+        val s = bd.toPlainString()
+        return if (bd.signum() == 0 && s.startsWith("-")) s.substring(1) else s
+    }
+
+    /** Sci mode: scientific notation with [digits] significant figures. */
+    private fun scientific(value: Double, digits: Int): String {
+        if (value == 0.0) {
+            val frac = (digits.coerceIn(1, 10) - 1)
+            return if (frac == 0) "0E0" else "0." + "0".repeat(frac) + "E0"
+        }
+        val n = digits.coerceIn(1, 10)
+        val rounded = BigDecimal(value).round(MathContext(n, RoundingMode.HALF_UP))
+        val negative = rounded.signum() < 0
+        var mantissa = rounded.abs()
+        var exp = 0
+        while (mantissa >= BigDecimal.TEN) { mantissa = mantissa.movePointLeft(1); exp++ }
+        while (mantissa > BigDecimal.ZERO && mantissa < BigDecimal.ONE) { mantissa = mantissa.movePointRight(1); exp-- }
+        val m = mantissa.setScale(n - 1, RoundingMode.HALF_UP).toPlainString()
+        val sign = if (negative) "-" else ""
+        return "$sign${m}E$exp"
     }
 
     /**

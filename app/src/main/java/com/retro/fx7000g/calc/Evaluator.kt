@@ -4,16 +4,24 @@ import kotlin.math.E
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.acos
+import kotlin.math.acosh
 import kotlin.math.asin
+import kotlin.math.asinh
 import kotlin.math.atan
+import kotlin.math.atan2
+import kotlin.math.atanh
 import kotlin.math.cos
+import kotlin.math.cosh
+import kotlin.math.hypot
 import kotlin.math.ln
 import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.roundToLong
 import kotlin.math.sin
+import kotlin.math.sinh
 import kotlin.math.sqrt
 import kotlin.math.tan
+import kotlin.math.tanh
 import kotlin.math.truncate
 
 /** Angle unit, mirroring the FX-7000G's Deg / Rad / Gra modes. */
@@ -58,6 +66,15 @@ object Evaluator {
         object Square : Token
         object Factorial : Token
         object Sqrt : Token
+        object Root : Token          // ˣ√  (index-th root)
+        object Reciprocal : Token    // ⁻¹ (1/x)
+        object Percent : Token       // %
+        object Comma : Token         // , (Pol/Rec argument separator)
+        object Perm : Token          // nPr
+        object Comb : Token          // nCr
+        object Deg : Token           // ° (sexagesimal degrees)
+        object Min : Token           // ′ (arc-minutes)
+        object Sec : Token           // ″ (arc-seconds)
         data class Var(val name: Char) : Token
         object Store : Token
     }
@@ -86,6 +103,12 @@ object Evaluator {
                     val value = text.toDoubleOrNull() ?: throw CalcError("num")
                     tokens += Token.Num(value)
                 }
+                src.startsWith("sinh$INV", i) -> { tokens += Token.Fn("asinh"); i += 4 + INV.length }
+                src.startsWith("cosh$INV", i) -> { tokens += Token.Fn("acosh"); i += 4 + INV.length }
+                src.startsWith("tanh$INV", i) -> { tokens += Token.Fn("atanh"); i += 4 + INV.length }
+                src.startsWith("sinh", i) -> { tokens += Token.Fn("sinh"); i += 4 }
+                src.startsWith("cosh", i) -> { tokens += Token.Fn("cosh"); i += 4 }
+                src.startsWith("tanh", i) -> { tokens += Token.Fn("tanh"); i += 4 }
                 src.startsWith("sin$INV", i) -> { tokens += Token.Fn("asin"); i += 3 + INV.length }
                 src.startsWith("cos$INV", i) -> { tokens += Token.Fn("acos"); i += 3 + INV.length }
                 src.startsWith("tan$INV", i) -> { tokens += Token.Fn("atan"); i += 3 + INV.length }
@@ -97,6 +120,11 @@ object Evaluator {
                 src.startsWith("Abs", i) -> { tokens += Token.Fn("abs"); i += 3 }
                 src.startsWith("Int", i) -> { tokens += Token.Fn("int"); i += 3 }
                 src.startsWith("Frac", i) -> { tokens += Token.Fn("frac"); i += 4 }
+                src.startsWith("Pol", i) -> { tokens += Token.Fn("pol"); i += 3 }
+                src.startsWith("Rec", i) -> { tokens += Token.Fn("rec"); i += 3 }
+                src.startsWith("Ran#", i) -> { tokens += Token.Const("ran"); i += 4 }
+                src.startsWith("nPr", i) -> { tokens += Token.Perm; i += 3 }
+                src.startsWith("nCr", i) -> { tokens += Token.Comb; i += 3 }
                 src.startsWith("Ans", i) -> { tokens += Token.Const("ans"); i += 3 }
                 c in 'A'..'Z' -> { tokens += Token.Var(c); i++ }
                 c == '\u2192' -> { tokens += Token.Store; i++ } // → (store)
@@ -111,7 +139,14 @@ object Evaluator {
                 c == '^' -> { tokens += Token.Caret; i++ }
                 c == '\u00B2' -> { tokens += Token.Square; i++ } // ²
                 c == '!' -> { tokens += Token.Factorial; i++ }
+                src.startsWith("\u02E3\u221A", i) -> { tokens += Token.Root; i += 2 } // ˣ√
+                src.startsWith("\u207B\u00B9", i) -> { tokens += Token.Reciprocal; i += 2 } // ⁻¹
                 c == '\u221A' -> { tokens += Token.Sqrt; i++ } // √
+                c == '%' -> { tokens += Token.Percent; i++ }
+                c == ',' -> { tokens += Token.Comma; i++ }
+                c == '\u00B0' -> { tokens += Token.Deg; i++ } // °
+                c == '\u2032' -> { tokens += Token.Min; i++ } // ′
+                c == '\u2033' -> { tokens += Token.Sec; i++ } // ″
                 else -> throw CalcError("char")
             }
         }
@@ -146,11 +181,23 @@ object Evaluator {
         }
 
         private fun additive(): Double {
+            var acc = permutation()
+            while (true) {
+                when (peek()) {
+                    Token.Plus -> { next(); acc += permutation() }
+                    Token.Minus -> { next(); acc -= permutation() }
+                    else -> return acc
+                }
+            }
+        }
+
+        // nPr / nCr bind tighter than +− but looser than ×÷, like the hardware.
+        private fun permutation(): Double {
             var acc = multiplicative()
             while (true) {
                 when (peek()) {
-                    Token.Plus -> { next(); acc += multiplicative() }
-                    Token.Minus -> { next(); acc -= multiplicative() }
+                    Token.Perm -> { next(); acc = nPr(acc, multiplicative()) }
+                    Token.Comb -> { next(); acc = nCr(acc, multiplicative()) }
                     else -> return acc
                 }
             }
@@ -183,10 +230,12 @@ object Evaluator {
 
         private fun power(): Double {
             val base = postfix()
-            return if (peek() == Token.Caret) {
-                next()
-                base.pow(unary()) // right associative; exponent may be signed
-            } else base
+            return when (peek()) {
+                Token.Caret -> { next(); base.pow(unary()) } // right associative
+                // index ˣ√ radicand  =  radicand^(1/index)
+                Token.Root -> { next(); val y = unary(); if (base == 0.0) throw CalcError("root"); y.pow(1.0 / base) }
+                else -> base
+            }
         }
 
         private fun postfix(): Double {
@@ -195,9 +244,28 @@ object Evaluator {
                 when (peek()) {
                     Token.Square -> { next(); value *= value }
                     Token.Factorial -> { next(); value = factorial(value) }
+                    Token.Reciprocal -> { next(); if (value == 0.0) throw CalcError("div0"); value = 1.0 / value }
+                    Token.Percent -> { next(); value /= 100.0 }
+                    Token.Deg -> { next(); value = readDms(value) }
                     else -> return value
                 }
             }
+        }
+
+        /** Combines a "D° [M′ [S″]]" sexagesimal entry into decimal degrees. */
+        private fun readDms(degrees: Double): Double {
+            var total = degrees
+            val m = peek()
+            if (m is Token.Num && tokens.getOrNull(pos + 1) == Token.Min) {
+                next(); next()
+                total += m.value / 60.0
+                val s = peek()
+                if (s is Token.Num && tokens.getOrNull(pos + 1) == Token.Sec) {
+                    next(); next()
+                    total += s.value / 3600.0
+                }
+            }
+            return total
         }
 
         private fun atom(): Double = when (val t = peek()) {
@@ -211,14 +279,40 @@ object Evaluator {
                 v
             }
             Token.Sqrt -> { next(); val v = unary(); if (v < 0) throw CalcError("sqrt"); sqrt(v) }
-            is Token.Fn -> { next(); applyFn(t.name, unary()) }
+            is Token.Fn -> {
+                next()
+                if (t.name == "pol" || t.name == "rec") twoArgFn(t.name) else applyFn(t.name, unary())
+            }
             else -> throw CalcError("expected value")
+        }
+
+        /** Pol(x,y) → r (θ→J) and Rec(r,θ) → x (y→J); both also mirror into I. */
+        private fun twoArgFn(name: String): Double {
+            if (peek() == Token.LParen) next()
+            val a = additive()
+            if (peek() != Token.Comma) throw CalcError("args")
+            next()
+            val b = additive()
+            if (peek() == Token.RParen) next()
+            return if (name == "pol") {
+                val r = hypot(a, b)
+                vars['I'] = r
+                vars['J'] = fromRadians(atan2(b, a))
+                r
+            } else {
+                val x = a * cos(toRadians(b))
+                val y = a * sin(toRadians(b))
+                vars['I'] = x
+                vars['J'] = y
+                x
+            }
         }
 
         private fun constant(name: String): Double = when (name) {
             "pi" -> PI
             "e" -> E
             "ans" -> ans
+            "ran" -> Math.random()
             else -> throw CalcError("const")
         }
 
@@ -229,6 +323,12 @@ object Evaluator {
             "asin" -> { if (arg < -1 || arg > 1) throw CalcError("domain"); fromRadians(asin(arg)) }
             "acos" -> { if (arg < -1 || arg > 1) throw CalcError("domain"); fromRadians(acos(arg)) }
             "atan" -> fromRadians(atan(arg))
+            "sinh" -> sinh(arg)
+            "cosh" -> cosh(arg)
+            "tanh" -> tanh(arg)
+            "asinh" -> asinh(arg)
+            "acosh" -> { if (arg < 1) throw CalcError("domain"); acosh(arg) }
+            "atanh" -> { if (arg <= -1 || arg >= 1) throw CalcError("domain"); atanh(arg) }
             "log" -> { if (arg <= 0) throw CalcError("domain"); log10(arg) }
             "ln" -> { if (arg <= 0) throw CalcError("domain"); ln(arg) }
             "abs" -> abs(arg)
@@ -256,6 +356,24 @@ object Evaluator {
             var acc = 1.0
             for (k in 2..n) acc *= k
             return acc
+        }
+
+        private fun nPr(n: Double, r: Double): Double {
+            val nn = n.roundToLong(); val rr = r.roundToLong()
+            if (nn < 0 || rr < 0 || rr > nn ||
+                abs(n - nn) > 1e-9 || abs(r - rr) > 1e-9
+            ) throw CalcError("domain")
+            var acc = 1.0
+            for (k in 0 until rr) acc *= (nn - k)
+            return acc
+        }
+
+        private fun nCr(n: Double, r: Double): Double {
+            val rr = r.roundToLong()
+            val perm = nPr(n, r)
+            var f = 1.0
+            for (k in 2..rr) f *= k
+            return perm / f
         }
     }
     // endregion

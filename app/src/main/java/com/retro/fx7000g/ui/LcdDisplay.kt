@@ -39,16 +39,25 @@ fun LcdDisplay(
     rangeLines: List<String>? = null,
     rangeCursorRow: Int = -1,
     rangeCursorCol: Int = -1,
+    modeLines: List<String>? = null,
+    presetLines: List<String>? = null,
+    indicator: String = "",
+    traceCol: Int = -1,
+    traceRow: Int = -1,
+    traceText: String = "",
     modifier: Modifier = Modifier
 ) {
     val buffer = remember(
         entry, result, modeLabel, memorySet, cursor, showCursor,
-        graph, rangeLines, rangeCursorRow, rangeCursorCol
+        graph, rangeLines, rangeCursorRow, rangeCursorCol, modeLines,
+        presetLines, indicator, traceCol, traceRow, traceText
     ) {
         when {
+            presetLines != null -> buildMenuBuffer("GRAPH", presetLines)
+            modeLines != null -> buildMenuBuffer("MODE", modeLines)
             rangeLines != null -> buildRangeBuffer(rangeLines, rangeCursorRow, rangeCursorCol)
-            graph != null -> graph
-            else -> buildBuffer(entry, result, modeLabel, memorySet, cursor, showCursor)
+            graph != null -> overlayTrace(graph, traceCol, traceRow, traceText)
+            else -> buildBuffer(entry, result, modeLabel, memorySet, cursor, showCursor, indicator)
         }
     }
 
@@ -91,13 +100,20 @@ private fun buildBuffer(
     modeLabel: String,
     memorySet: Boolean,
     cursor: Int,
-    showCursor: Boolean
+    showCursor: Boolean,
+    indicator: String
 ): BooleanArray {
     val buf = BooleanArray(COLS * ROWS)
 
-    // Status row (char-row 0): mode label at far left, memory flag at far right.
+    // Status row (char-row 0): mode label at far left, S/A/h prefix flags and
+    // the memory flag at the right.
     drawText(buf, modeLabel, col = 0, charRow = 0)
-    if (memorySet) drawTextRight(buf, "M", charRow = 0)
+    var rightCol = 16
+    if (memorySet) { drawText(buf, "M", 15, 0); rightCol = 15 }
+    if (indicator.isNotEmpty()) {
+        val startCol = (rightCol - indicator.length).coerceAtLeast(0)
+        drawText(buf, indicator, startCol, 0)
+    }
 
     // Entry occupies char-rows 2 and 3, left aligned, showing a 32-char window
     // that keeps the cursor in view.
@@ -147,6 +163,49 @@ private fun buildRangeBuffer(
         drawText(buf, line, col = 0, charRow = 2 + i)
     }
     if (cursorRow in 0 until (ROWS / CELL_H)) drawCursor(buf, cursorCol, cursorRow)
+    return buf
+}
+
+/** Renders a simple header + option lines menu (Norm/Fix/Sci or graph presets). */
+private fun buildMenuBuffer(header: String, lines: List<String>): BooleanArray {
+    val buf = BooleanArray(COLS * ROWS)
+    drawText(buf, header, col = 0, charRow = 0)
+    lines.forEachIndexed { i, line ->
+        drawText(buf, line, col = 0, charRow = 2 + i)
+    }
+    return buf
+}
+
+/** Copies the graph and overlays the trace cursor column, marker and read-out. */
+private fun overlayTrace(
+    graph: BooleanArray,
+    traceCol: Int,
+    traceRow: Int,
+    traceText: String
+): BooleanArray {
+    if (traceCol < 0) return graph
+    val buf = graph.copyOf()
+
+    // Dotted vertical cursor line at the trace column.
+    if (traceCol in 0 until COLS) {
+        for (y in 0 until ROWS) {
+            if (y % 2 == 0) buf[y * COLS + traceCol] = true
+        }
+    }
+    // Solid 3x3 marker at the curve point.
+    if (traceRow in 0 until ROWS && traceCol in 0 until COLS) {
+        for (dy in -1..1) for (dx in -1..1) {
+            val x = traceCol + dx
+            val y = traceRow + dy
+            if (x in 0 until COLS && y in 0 until ROWS) buf[y * COLS + x] = true
+        }
+    }
+    // Coordinate read-out on the bottom char-row, cleared for legibility.
+    if (traceText.isNotEmpty()) {
+        val top = 7 * CELL_H
+        for (y in top until ROWS) for (x in 0 until COLS) buf[y * COLS + x] = false
+        drawText(buf, traceText, col = 0, charRow = 7)
+    }
     return buf
 }
 

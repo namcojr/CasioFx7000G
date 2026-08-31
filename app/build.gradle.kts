@@ -12,8 +12,8 @@ android {
         applicationId = "com.retro.fx7000g"
         minSdk = 24
         targetSdk = 35
-        versionCode = 15
-        versionName = "1.5.0"
+        versionCode = 21
+        versionName = "2.1.0"
     }
 
     // Name the built APK e.g. "Casio FX-7000G v1.0.0.apk"
@@ -57,4 +57,5 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     debugImplementation(libs.androidx.ui.tooling)
+    testImplementation(libs.junit)
 }
