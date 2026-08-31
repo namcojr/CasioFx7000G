@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- drop shadow -->
+    <path
+        android:pathData="M37,20 L71,20 A7,7 0 0 1 78,27 L78,85 A7,7 0 0 1 71,92 L37,92 A7,7 0 0 1 30,85 L30,27 A7,7 0 0 1 37,20 Z"
+        android:fillColor="#33000000" />
+
+    <!-- calculator body -->
+    <path
+        android:pathData="M37,18 L71,18 A7,7 0 0 1 78,25 L78,83 A7,7 0 0 1 71,90 L37,90 A7,7 0 0 1 30,83 L30,25 A7,7 0 0 1 37,18 Z"
+        android:fillColor="#2B2C31"
+        android:strokeColor="#3E404A"
+        android:strokeWidth="0.8" />
+
+    <!-- signature maroon top strip -->
+    <path
+        android:pathData="M37,18 L71,18 A7,7 0 0 1 78,25 L78,30 L30,30 L30,25 A7,7 0 0 1 37,18 Z"
+        android:fillColor="#7C1F2E" />
+
+    <!-- brand accent line -->
+    <path
+        android:pathData="M34,32.5 L74,32.5"
+        android:strokeColor="#66FFFFFF"
+        android:strokeWidth="0.6" />
+
+    <!-- screen recessed frame -->
+    <path
+        android:pathData="M38,36 L70,36 A3,3 0 0 1 73,39 L73,54 A3,3 0 0 1 70,57 L38,57 A3,3 0 0 1 35,54 L35,39 A3,3 0 0 1 38,36 Z"
+        android:fillColor="#141519" />
+
+    <!-- LCD screen -->
+    <path
+        android:pathData="M39,38 L69,38 A2,2 0 0 1 71,40 L71,53 A2,2 0 0 1 69,55 L39,55 A2,2 0 0 1 37,53 L37,40 A2,2 0 0 1 39,38 Z"
+        android:fillColor="#B4CE52" />
+
+    <!-- graph axes -->
+    <path
+        android:pathData="M38,46.5 L70,46.5"
+        android:strokeColor="#804C6320"
+        android:strokeWidth="0.7" />
+    <path
+        android:pathData="M54,39 L54,54"
+        android:strokeColor="#804C6320"
+        android:strokeWidth="0.7" />
+
+    <!-- graph curve -->
+    <path
+        android:pathData="M38,46 C42,39 46,39 50,46 C54,53 58,53 62,46 C65,41 68,41 70,44"
+        android:strokeColor="#2E3D0E"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- keypad: grey function/number keys -->
+    <path
+        android:fillColor="#4C4E56"
+        android:pathData="M36.2,61 L41.8,61 A1.2,1.2 0 0 1 43,62.2 L43,64.8 A1.2,1.2 0 0 1 41.8,66 L36.2,66 A1.2,1.2 0 0 1 35,64.8 L35,62.2 A1.2,1.2 0 0 1 36.2,61 Z
+M46.2,61 L51.8,61 A1.2,1.2 0 0 1 53,62.2 L53,64.8 A1.2,1.2 0 0 1 51.8,66 L46.2,66 A1.2,1.2 0 0 1 45,64.8 L45,62.2 A1.2,1.2 0 0 1 46.2,61 Z
+M56.2,61 L61.8,61 A1.2,1.2 0 0 1 63,62.2 L63,64.8 A1.2,1.2 0 0 1 61.8,66 L56.2,66 A1.2,1.2 0 0 1 55,64.8 L55,62.2 A1.2,1.2 0 0 1 56.2,61 Z
+M66.2,61 L71.8,61 A1.2,1.2 0 0 1 73,62.2 L73,64.8 A1.2,1.2 0 0 1 71.8,66 L66.2,66 A1.2,1.2 0 0 1 65,64.8 L65,62.2 A1.2,1.2 0 0 1 66.2,61 Z
+M36.2,68 L41.8,68 A1.2,1.2 0 0 1 43,69.2 L43,71.8 A1.2,1.2 0 0 1 41.8,73 L36.2,73 A1.2,1.2 0 0 1 35,71.8 L35,69.2 A1.2,1.2 0 0 1 36.2,68 Z
+M46.2,68 L51.8,68 A1.2,1.2 0 0 1 53,69.2 L53,71.8 A1.2,1.2 0 0 1 51.8,73 L46.2,73 A1.2,1.2 0 0 1 45,71.8 L45,69.2 A1.2,1.2 0 0 1 46.2,68 Z
+M56.2,68 L61.8,68 A1.2,1.2 0 0 1 63,69.2 L63,71.8 A1.2,1.2 0 0 1 61.8,73 L56.2,73 A1.2,1.2 0 0 1 55,71.8 L55,69.2 A1.2,1.2 0 0 1 56.2,68 Z
+M66.2,68 L71.8,68 A1.2,1.2 0 0 1 73,69.2 L73,71.8 A1.2,1.2 0 0 1 71.8,73 L66.2,73 A1.2,1.2 0 0 1 65,71.8 L65,69.2 A1.2,1.2 0 0 1 66.2,68 Z
+M36.2,75 L41.8,75 A1.2,1.2 0 0 1 43,76.2 L43,78.8 A1.2,1.2 0 0 1 41.8,80 L36.2,80 A1.2,1.2 0 0 1 35,78.8 L35,76.2 A1.2,1.2 0 0 1 36.2,75 Z
+M46.2,75 L51.8,75 A1.2,1.2 0 0 1 53,76.2 L53,78.8 A1.2,1.2 0 0 1 51.8,80 L46.2,80 A1.2,1.2 0 0 1 45,78.8 L45,76.2 A1.2,1.2 0 0 1 46.2,75 Z
+M56.2,75 L61.8,75 A1.2,1.2 0 0 1 63,76.2 L63,78.8 A1.2,1.2 0 0 1 61.8,80 L56.2,80 A1.2,1.2 0 0 1 55,78.8 L55,76.2 A1.2,1.2 0 0 1 56.2,75 Z
+M66.2,75 L71.8,75 A1.2,1.2 0 0 1 73,76.2 L73,78.8 A1.2,1.2 0 0 1 71.8,80 L66.2,80 A1.2,1.2 0 0 1 65,78.8 L65,76.2 A1.2,1.2 0 0 1 66.2,75 Z
+M36.2,82 L41.8,82 A1.2,1.2 0 0 1 43,83.2 L43,85.8 A1.2,1.2 0 0 1 41.8,87 L36.2,87 A1.2,1.2 0 0 1 35,85.8 L35,83.2 A1.2,1.2 0 0 1 36.2,82 Z
+M46.2,82 L51.8,82 A1.2,1.2 0 0 1 53,83.2 L53,85.8 A1.2,1.2 0 0 1 51.8,87 L46.2,87 A1.2,1.2 0 0 1 45,85.8 L45,83.2 A1.2,1.2 0 0 1 46.2,82 Z
+M56.2,82 L61.8,82 A1.2,1.2 0 0 1 63,83.2 L63,85.8 A1.2,1.2 0 0 1 61.8,87 L56.2,87 A1.2,1.2 0 0 1 55,85.8 L55,83.2 A1.2,1.2 0 0 1 56.2,82 Z" />
+
+    <!-- accent EXE key -->
+    <path
+        android:fillColor="#E07B2C"
+        android:pathData="M66.2,82 L71.8,82 A1.2,1.2 0 0 1 73,83.2 L73,85.8 A1.2,1.2 0 0 1 71.8,87 L66.2,87 A1.2,1.2 0 0 1 65,85.8 L65,83.2 A1.2,1.2 0 0 1 66.2,82 Z" />
+</vector>

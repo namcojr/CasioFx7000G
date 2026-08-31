@@ -1,0 +1,238 @@
+package com.retro.fx7000g.ui
+
+import android.view.HapticFeedbackConstants
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.retro.fx7000g.calc.CalcAction
+import com.retro.fx7000g.calc.CalculatorState
+
+private const val INV = "\u207B\u00B9" // superscript "-1"
+
+/** Specification for a single physical key. */
+private data class KeySpec(
+    val label: String,
+    val primary: CalcAction,
+    val color: Color,
+    val shiftLabel: String? = null,
+    val shifted: CalcAction? = null,
+    val weight: Float = 1f
+)
+
+private fun ins(text: String) = CalcAction.Insert(text)
+
+/** A keypad row: its keys plus how tall it is relative to the number rows. */
+private data class KeyRow(
+    val keys: List<KeySpec>,
+    val heightWeight: Float = 1f,
+    val compact: Boolean = false
+)
+
+/** Height weight for the dense, half-height function/mode rows. */
+private const val FUNC_ROW = 0.5f
+/** Height weight for the taller, more rectangular number/operator rows. */
+private const val NUM_ROW = 0.85f
+
+private fun keypad(): List<KeyRow> = listOf(
+    KeyRow(
+        compact = true, heightWeight = FUNC_ROW,
+        keys = listOf(
+            KeySpec("SHIFT", CalcAction.ToggleShift, Fx7000gColors.KeyShift),
+            KeySpec("MODE", CalcAction.CycleMode, Fx7000gColors.KeyFunction),
+            KeySpec("DEL", CalcAction.Delete, Fx7000gColors.KeyFunction),
+            KeySpec("AC", CalcAction.Clear, Fx7000gColors.KeyAc, weight = 2f)
+        )
+    ),
+    KeyRow(
+        compact = true, heightWeight = FUNC_ROW,
+        keys = listOf(
+            KeySpec("sin", ins("sin("), Fx7000gColors.KeyFunction, "sin$INV", ins("sin$INV(")),
+            KeySpec("cos", ins("cos("), Fx7000gColors.KeyFunction, "cos$INV", ins("cos$INV(")),
+            KeySpec("tan", ins("tan("), Fx7000gColors.KeyFunction, "tan$INV", ins("tan$INV(")),
+            KeySpec("(", ins("("), Fx7000gColors.KeyFunction),
+            KeySpec(")", ins(")"), Fx7000gColors.KeyFunction)
+        )
+    ),
+    KeyRow(
+        compact = true, heightWeight = FUNC_ROW,
+        keys = listOf(
+            KeySpec("log", ins("log("), Fx7000gColors.KeyFunction, "10\u02E3", ins("10^(")),
+            KeySpec("ln", ins("ln("), Fx7000gColors.KeyFunction, "e\u02E3", ins("e^(")),
+            KeySpec("x\u00B2", ins("\u00B2"), Fx7000gColors.KeyFunction),
+            KeySpec("x\u02B8", ins("^"), Fx7000gColors.KeyFunction),
+            KeySpec("\u221A", ins("\u221A("), Fx7000gColors.KeyFunction)
+        )
+    ),
+    KeyRow(
+        compact = true, heightWeight = FUNC_ROW,
+        keys = listOf(
+            KeySpec("x!", ins("!"), Fx7000gColors.KeyFunction),
+            KeySpec("Abs", ins("Abs("), Fx7000gColors.KeyFunction),
+            KeySpec("Int", ins("Int("), Fx7000gColors.KeyFunction),
+            KeySpec("Frac", ins("Frac("), Fx7000gColors.KeyFunction),
+            KeySpec("X", ins("X"), Fx7000gColors.KeyFunction, "\u2192", ins("\u2192"))
+        )
+    ),
+    KeyRow(
+        compact = true, heightWeight = FUNC_ROW,
+        keys = listOf(
+            KeySpec("DEC", CalcAction.ConvertBase(10), Fx7000gColors.KeyBase, "and", ins("and")),
+            KeySpec("HEX", CalcAction.ConvertBase(16), Fx7000gColors.KeyBase, "or", ins("or")),
+            KeySpec("BIN", CalcAction.ConvertBase(2), Fx7000gColors.KeyBase, "xor", ins("xor")),
+            KeySpec("OCT", CalcAction.ConvertBase(8), Fx7000gColors.KeyBase, "Not", ins("Not")),
+            KeySpec("Graph", CalcAction.Graph, Fx7000gColors.KeyFunction, "Range", CalcAction.Range)
+        )
+    ),
+    KeyRow(
+        heightWeight = NUM_ROW,
+        keys = listOf(
+            KeySpec("7", ins("7"), Fx7000gColors.KeyNumber, "A", ins("A")),
+            KeySpec("8", ins("8"), Fx7000gColors.KeyNumber, "B", ins("B")),
+            KeySpec("9", ins("9"), Fx7000gColors.KeyNumber, "C", ins("C")),
+            KeySpec("\u00F7", ins("\u00F7"), Fx7000gColors.KeyOperator),
+            KeySpec("\u00D7", ins("\u00D7"), Fx7000gColors.KeyOperator)
+        )
+    ),
+    KeyRow(
+        heightWeight = NUM_ROW,
+        keys = listOf(
+            KeySpec("4", ins("4"), Fx7000gColors.KeyNumber, "D", ins("D")),
+            KeySpec("5", ins("5"), Fx7000gColors.KeyNumber, "E", ins("E")),
+            KeySpec("6", ins("6"), Fx7000gColors.KeyNumber, "F", ins("F")),
+            KeySpec("\u2212", ins("\u2212"), Fx7000gColors.KeyOperator),
+            KeySpec("+", ins("+"), Fx7000gColors.KeyOperator)
+        )
+    ),
+    KeyRow(
+        heightWeight = NUM_ROW,
+        keys = listOf(
+            KeySpec("1", ins("1"), Fx7000gColors.KeyNumber),
+            KeySpec("2", ins("2"), Fx7000gColors.KeyNumber),
+            KeySpec("3", ins("3"), Fx7000gColors.KeyNumber),
+            KeySpec("\u03C0", ins("\u03C0"), Fx7000gColors.KeyFunction, "e", ins("e")),
+            KeySpec("EXP", ins("E"), Fx7000gColors.KeyFunction)
+        )
+    ),
+    KeyRow(
+        heightWeight = NUM_ROW,
+        keys = listOf(
+            KeySpec("0", ins("0"), Fx7000gColors.KeyNumber),
+            KeySpec(".", ins("."), Fx7000gColors.KeyNumber),
+            KeySpec("(-)", ins("\u2212"), Fx7000gColors.KeyNumber),
+            KeySpec("Ans", ins("Ans"), Fx7000gColors.KeyFunction),
+            KeySpec("M+", CalcAction.MemoryAdd, Fx7000gColors.KeyFunction, "M", ins("M"))
+        )
+    ),
+    KeyRow(
+        heightWeight = 0.72f,
+        keys = listOf(
+            KeySpec("\u25C4", CalcAction.MoveLeft, Fx7000gColors.KeyFunction),
+            KeySpec("\u25BA", CalcAction.MoveRight, Fx7000gColors.KeyFunction),
+            KeySpec("EXE", CalcAction.Evaluate, Fx7000gColors.KeyExe, weight = 3f)
+        )
+    )
+)
+
+@Composable
+fun Keypad(state: CalculatorState, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(5.dp)
+    ) {
+        for (row in keypad()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(row.heightWeight),
+                horizontalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                for (key in row.keys) {
+                    KeyButton(
+                        key = key,
+                        shiftActive = state.shift,
+                        compact = row.compact,
+                        onClick = {
+                            val action = if (state.shift && key.shifted != null) key.shifted
+                            else key.primary
+                            state.onAction(action)
+                        },
+                        modifier = Modifier
+                            .weight(key.weight)
+                            .fillMaxHeight()
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun KeyButton(
+    key: KeySpec,
+    shiftActive: Boolean,
+    compact: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val highlighted = shiftActive && key.shifted != null
+    val view = LocalView.current
+    Surface(
+        color = key.color,
+        shape = RoundedCornerShape(if (compact) 5.dp else 7.dp),
+        border = BorderStroke(1.dp, Fx7000gColors.KeyBorder),
+        modifier = modifier.clickable {
+            view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            onClick()
+        }
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(2.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                if (key.shiftLabel != null) {
+                    Text(
+                        text = key.shiftLabel,
+                        color = if (highlighted) Color.White else Fx7000gColors.KeyShiftLegend,
+                        fontSize = if (compact) 7.sp else 9.sp,
+                        fontFamily = FontFamily.SansSerif,
+                        textAlign = TextAlign.Center
+                    )
+                }
+                Text(
+                    text = key.label,
+                    color = Fx7000gColors.KeyText,
+                    fontSize = if (compact) 11.sp else 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = FontFamily.SansSerif,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}

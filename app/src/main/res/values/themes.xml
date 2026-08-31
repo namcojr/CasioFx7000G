@@ -1,0 +1,3 @@
+<resources>
+    <style name="Theme.FX7000G" parent="android:Theme.Material.NoActionBar" />
+</resources>
