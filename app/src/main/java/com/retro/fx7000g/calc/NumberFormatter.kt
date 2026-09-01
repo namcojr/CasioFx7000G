@@ -89,9 +89,12 @@ object NumberFormatter {
     }
 
     fun formatBase(n: Long, base: Int): String = when (base) {
-        16 -> n.toString(16).uppercase()
-        2 -> n.toString(2)
-        8 -> n.toString(8)
+        // Binary is 16-bit, octal/hex are 32-bit; masking shows negatives as the
+        // two's-complement bit pattern the fx-7000G displays (no minus sign),
+        // e.g. -1 → 1111111111111111 (Bin), FFFFFFFF (Hex), 37777777777 (Oct).
+        16 -> (n and 0xFFFFFFFFL).toString(16).uppercase()
+        2 -> (n and 0xFFFFL).toString(2)
+        8 -> (n and 0xFFFFFFFFL).toString(8)
         else -> n.toString(10)
     }
 

@@ -3,6 +3,7 @@ package com.retro.fx7000g.calc
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import kotlin.math.PI
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
@@ -365,6 +366,11 @@ class CalculatorState {
             }
             return
         }
+        // Built-in function graphs auto-set the optimum window (fx-7000G Bltin
+        // behaviour): graphing sin(X)/cos(X)/tan(X) as the first curve fits a
+        // full wave instead of the flat line the default ±4.7 window would show
+        // for sin in degrees. Overlaid curves keep the first window.
+        if (graphExprs.isEmpty()) builtinWindow(entry)?.let { applyWindow(it) }
         if (xMax <= xMin || yMax <= yMin) {
             result = "Ma ERROR"; error = true; graphBuffer = null; return
         }
@@ -372,6 +378,35 @@ class CalculatorState {
         graphExprs.add(entry)
         traceActive = false
         rebuildGraph()
+    }
+
+    /** A graph viewing window (the six RANGE values). */
+    private data class GraphWindow(
+        val xMin: Double, val xMax: Double, val xScl: Double,
+        val yMin: Double, val yMax: Double, val yScl: Double
+    )
+
+    /**
+     * The optimum window for a recognised built-in graph, or null when the
+     * user's current window should be kept. Only the circular trig functions
+     * (sin/cos/tan of X) auto-range, matching the original fx-7000G Bltin
+     * ranges of ±360° (Xscl 180), Ymax 1.6, Yscl 0.5 — converted for RAD/GRA.
+     */
+    private fun builtinWindow(rawExpr: String): GraphWindow? {
+        val e = rawExpr.replace(" ", "").removeSuffix(")")
+        val isTrig = e == "sin(X" || e == "cos(X" || e == "tan(X" ||
+            e == "sinX" || e == "cosX" || e == "tanX"
+        if (!isTrig) return null
+        return when (angleMode) {
+            AngleMode.DEG -> GraphWindow(-360.0, 360.0, 180.0, -1.6, 1.6, 0.5)
+            AngleMode.RAD -> GraphWindow(-2 * PI, 2 * PI, PI / 2, -1.6, 1.6, 0.5)
+            AngleMode.GRA -> GraphWindow(-400.0, 400.0, 200.0, -1.6, 1.6, 0.5)
+        }
+    }
+
+    private fun applyWindow(w: GraphWindow) {
+        xMin = w.xMin; xMax = w.xMax; xScl = w.xScl
+        yMin = w.yMin; yMax = w.yMax; yScl = w.yScl
     }
 
     /** Redraws the axes and every accumulated expression into the graph buffer. */

@@ -131,7 +131,8 @@ private fun buildBuffer(
         drawCursor(buf, local % 16, 2 + local / 16)
     }
 
-    // Result on char-row 6, right aligned.
+    // Result on char-row 6, right aligned. On the fx-7000G every BASE-n value
+    // fits one 16-char line (binary is 16-bit, octal/decimal/hex are 32-bit).
     if (result.isNotEmpty()) {
         val shown = if (result.length <= 16) result else result.takeLast(16)
         drawTextRight(buf, shown, charRow = 6)

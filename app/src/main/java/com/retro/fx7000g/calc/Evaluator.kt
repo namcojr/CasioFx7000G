@@ -388,7 +388,11 @@ object Evaluator {
         val tokens = tokenizeBase(expression, base, ans)
         if (tokens.isEmpty()) throw CalcError("empty")
         val parser = BaseParser(tokens)
-        return parser.parse()
+        val raw = parser.parse()
+        // The fx-7000G stores BASE-n values as fixed-width signed integers:
+        // 16-bit for binary, 32-bit for octal/decimal/hex. Wrapping here makes
+        // negatives round-trip as two's complement (e.g. -1 → 1111111111111111).
+        return if (base == 2) raw.toShort().toLong() else raw.toInt().toLong()
     }
 
     private sealed interface BToken {
