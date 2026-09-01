@@ -1,6 +1,12 @@
 package com.retro.fx7000g.ui
 
 import android.view.HapticFeedbackConstants
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -216,25 +223,31 @@ private fun KeyButton(
     val view = LocalView.current
     val theme = LocalFx7000gTheme.current
 
-    // Resolve the base look from the theme, then overlay the active-prefix
-    // highlight (hyp / shift / alpha) if this key participates in it.
+    // Resolve the base look from the theme. ALPHA keeps a full-color face for
+    // contrast; SHIFT and HYP no longer recolor the whole key, instead the
+    // relevant text blinks (see below).
     val base = theme.keyVisual(roleFor(key.color))
     val visual = when {
-        hypHi -> base.copy(
-            faceTop = Fx7000gColors.KeyShift,
-            faceBottom = Fx7000gColors.KeyShift,
-            text = Color.White
-        )
-        shiftHi -> base.copy(
-            faceTop = Fx7000gColors.KeyShift.copy(alpha = 0.75f),
-            faceBottom = Fx7000gColors.KeyShift.copy(alpha = 0.55f)
-        )
         alphaHi -> base.copy(
             faceTop = Fx7000gColors.KeyAlpha.copy(alpha = 0.75f),
             faceBottom = Fx7000gColors.KeyAlpha.copy(alpha = 0.55f)
         )
         else -> base
     }
+
+    // White/yellow blink used to signal that this key's SHIFT legend or HYP
+    // function is the currently-armed action.
+    val blink = rememberInfiniteTransition(label = "prefixBlink")
+    val blinkPhase by blink.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 600, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "prefixBlinkPhase"
+    )
+    val blinkColor = if (blinkPhase < 0.5f) Color.White else Color(0xFFFFEB3B)
 
     val shape = RoundedCornerShape(if (compact) 5.dp else 7.dp)
     val lift = if (compact) 2.dp else 3.dp
@@ -270,7 +283,7 @@ private fun KeyButton(
                 if (key.shiftLabel != null) {
                     Text(
                         text = key.shiftLabel,
-                        color = if (shiftHi) Color.White else visual.shiftLegend,
+                        color = if (shiftHi) blinkColor else visual.shiftLegend,
                         fontSize = if (compact) 7.sp else 9.sp,
                         fontFamily = FontFamily.SansSerif,
                         textAlign = TextAlign.Center
@@ -278,7 +291,7 @@ private fun KeyButton(
                 }
                 Text(
                     text = key.label,
-                    color = visual.text,
+                    color = if (hypHi) blinkColor else visual.text,
                     fontSize = if (compact) 11.sp else 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = FontFamily.SansSerif,
@@ -287,7 +300,7 @@ private fun KeyButton(
                 if (key.alphaLabel != null) {
                     Text(
                         text = key.alphaLabel,
-                        color = if (alphaHi) Color.White else visual.alphaLegend,
+                        color = visual.alphaLegend,
                         fontSize = if (compact) 7.sp else 9.sp,
                         fontFamily = FontFamily.SansSerif,
                         textAlign = TextAlign.Center
