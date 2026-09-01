@@ -98,6 +98,8 @@ class Manual(FPDF):
         self.set_draw_color(*RULE)
         self.set_line_width(0.2)
         self.line(20, 18, 190, 18)
+        # Restore body start position so chapter content does not overlap header.
+        self.set_y(self.t_margin)
 
     def footer(self):
         if not self.show_chrome:
@@ -174,12 +176,17 @@ class Manual(FPDF):
 
     def note(self, text, label="Note"):
         self.ln(1)
-        y0 = self.get_y()
-        self.set_font("DJ", "", 9.2)
-        # measure height
-        self.set_xy(28, y0 + 2)
-        lines = self.multi_cell(154, 4.8, text, dry_run=True, output="LINES")
+        self.set_font("DJ", "B", 9.2)
+        label_w = self.get_string_width(label + ": ")
+        label_gap = 1.0
+        text_w = 154 - label_w - label_gap
+        # Measure with the same effective width used on the first rendered line
+        # (text starts after the bold label).
+        self.set_xy(28, self.get_y() + 2)
+        lines = self.multi_cell(text_w, 4.8, text, dry_run=True, output="LINES")
         h = 4 + len(lines) * 4.8
+        self.need(h + 3)
+        y0 = self.get_y()
         self.set_fill_color(244, 240, 228)
         self.set_draw_color(214, 196, 150)
         self.set_line_width(0.3)
@@ -190,10 +197,10 @@ class Manual(FPDF):
         self.set_font("DJ", "B", 9.2)
         self.set_text_color(*BODY_EDGE)
         self.cell(0, 4.8, label + ": ", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-        self.set_xy(28 + self.get_string_width(label + ": ") , y0 + 2)
+        self.set_xy(28 + label_w + label_gap, y0 + 2)
         self.set_font("DJ", "", 9.2)
         self.set_text_color(*INK)
-        self.multi_cell(154 - self.get_string_width(label + ": "), 4.8, text,
+        self.multi_cell(text_w, 4.8, text,
                         new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         self.set_y(y0 + h)
         self.ln(3)
@@ -375,36 +382,40 @@ class Manual(FPDF):
                    ("Ans", None, None), ("M+", "M", "M")]),
             ("e", [(LARR, None, None), (RARR, None, None), ("EXE", None, None)]),
         ]
+        # Draw in a narrower body footprint to match the original proportions.
+        body_scale = 0.70
+        bw = w * body_scale
+        bx = x + (w - bw) / 2
         h = w * 1.62
         # body
         self.set_fill_color(*BODY_DARK)
         self.set_draw_color(*BODY_EDGE)
         self.set_line_width(0.6)
-        self.rect(x, y, w, h, style="DF", round_corners=True, corner_radius=4)
+        self.rect(bx, y, bw, h, style="DF", round_corners=True, corner_radius=4)
         # brand
         self.set_font("DJ", "B", w * 0.052)
         self.set_text_color(235, 237, 239)
-        self.set_xy(x + 5, y + 3.5)
+        self.set_xy(bx + 5, y + 3.5)
         self.cell(0, 5, "CASIO")
         self.set_font("DJ", "B", w * 0.045)
         self.set_text_color(*SHIFT_C)
-        self.set_xy(x + w - 42, y + 3.6)
+        self.set_xy(bx + bw - 42, y + 3.6)
         self.cell(37, 5, "fx-7000G", align="R")
         self.set_font("DJ", "", w * 0.026)
         self.set_text_color(200, 204, 208)
-        self.set_xy(x + w - 42, y + 8.2)
+        self.set_xy(bx + bw - 42, y + 8.2)
         self.cell(37, 3, "SCIENTIFIC  \u00b7  GRAPH", align="R")
         # screen
         pad = 5
-        sw = w - 2 * pad
+        sw = bw - 2 * pad
         sy = y + 12
-        self.lcd(x + pad, sy, sw, ("DEG", "M"),
+        self.lcd(bx + pad, sy, sw, ("DEG", "M"),
                  ["2+3" + MUL + "4"], "14")
         sh = sw * 64 / 96.0
         # keypad
         ky = sy + sh + 6
         kpad = 4
-        kw = w - 2 * kpad
+        kw = bw - 2 * kpad
         gap = 1.6
         total_units = 0.5 * 5 + 0.85 * 4 + 0.72
         avail = h - (ky - y) - 5
@@ -413,21 +424,19 @@ class Manual(FPDF):
         for kind, keys in rows:
             rh = unit * (0.5 if kind == "f" else (0.72 if kind == "e" else 0.85))
             if kind == "e":
-                # arrows small + big EXE
-                n = 5  # arrow, arrow, EXE(x3)
-                kwid = (kw - gap * 2) / 5.0
-                specs = [(keys[0][0], 1, KEY_FILL), (keys[1][0], 1, KEY_FILL),
-                         (keys[2][0], 3, EXE_C)]
-                cx = x + kpad
-                for lbl, span, fill in specs:
-                    bw = kwid * span + gap * (span - 1)
-                    self._draw_key(cx, cy, bw, rh, lbl, None, None, fill,
+                # Arrow, arrow, EXE spanning the same total width as rows above.
+                base = (kw - gap * 4) / 5.0
+                widths = [base, base, base * 3 + gap * 2]
+                fills = [KEY_FILL, KEY_FILL, EXE_C]
+                cx = bx + kpad
+                for lbl, key_w, fill in zip([keys[0][0], keys[1][0], keys[2][0]], widths, fills):
+                    self._draw_key(cx, cy, key_w, rh, lbl, None, None, fill,
                                    kind, unit)
-                    cx += bw + gap
+                    cx += key_w + gap
             else:
                 n = len(keys)
                 kwid = (kw - gap * (n - 1)) / n
-                cx = x + kpad
+                cx = bx + kpad
                 for spec in keys:
                     lbl = spec[0]
                     al = spec[1] if len(spec) > 1 else None
@@ -481,6 +490,7 @@ pdf.set_creator("build_manual.py")
 
 # ============================== COVER ====================================== #
 pdf.show_chrome = False
+pdf.set_auto_page_break(False)
 pdf.add_page()
 pdf.set_fill_color(*ACCENT)
 pdf.rect(0, 0, 210, 46, style="F")
@@ -506,7 +516,7 @@ pdf.cell(0, 7, "Operation guide \u00b7 Worked examples \u00b7 Key reference")
 # calculator drawing
 pdf.calculator(63, 84, 84)
 
-pdf.set_xy(20, 272)
+pdf.set_xy(20, 268)
 pdf.set_font("DJ", "", 8.5)
 pdf.set_text_color(*SUB)
 pdf.cell(0, 4, "A faithful recreation of the 1985 CASIO fx-7000G \u2014 Kotlin + Jetpack Compose edition.",
@@ -516,6 +526,7 @@ pdf.cell(0, 4, "Dot-matrix 96 \u00d7 64 LCD \u00b7 DEG/RAD/GRA \u00b7 BASE-n \u0
 
 # ============================== PREFACE ==================================== #
 pdf.show_chrome = True
+pdf.set_auto_page_break(True, margin=20)
 pdf.chapter = "Preface"
 pdf.add_page()
 pdf.set_font("DJ", "B", 21)
