@@ -223,20 +223,13 @@ private fun KeyButton(
     val view = LocalView.current
     val theme = LocalFx7000gTheme.current
 
-    // Resolve the base look from the theme. ALPHA keeps a full-color face for
-    // contrast; SHIFT and HYP no longer recolor the whole key, instead the
-    // relevant text blinks (see below).
+    // Resolve the base look from the theme. SHIFT, ALPHA and HYP no longer
+    // recolor the whole key; instead the relevant text blinks (see below).
     val base = theme.keyVisual(roleFor(key.color))
-    val visual = when {
-        alphaHi -> base.copy(
-            faceTop = Fx7000gColors.KeyAlpha.copy(alpha = 0.75f),
-            faceBottom = Fx7000gColors.KeyAlpha.copy(alpha = 0.55f)
-        )
-        else -> base
-    }
+    val visual = base
 
-    // White/yellow blink used to signal that this key's SHIFT legend or HYP
-    // function is the currently-armed action.
+    // White/accent blink used to signal the currently-armed prefix action.
+    // SHIFT and HYP blink white<->shift-orange; ALPHA blinks white<->alpha-purple.
     val blink = rememberInfiniteTransition(label = "prefixBlink")
     val blinkPhase by blink.animateFloat(
         initialValue = 0f,
@@ -247,7 +240,9 @@ private fun KeyButton(
         ),
         label = "prefixBlinkPhase"
     )
-    val blinkColor = if (blinkPhase < 0.5f) Color.White else Color(0xFFFFEB3B)
+    val blinkOn = blinkPhase < 0.5f
+    val blinkShift = if (blinkOn) Color.White else Fx7000gColors.KeyShift
+    val blinkAlpha = if (blinkOn) Color.White else Fx7000gColors.KeyAlpha
 
     val shape = RoundedCornerShape(if (compact) 5.dp else 7.dp)
     val lift = if (compact) 2.dp else 3.dp
@@ -283,7 +278,7 @@ private fun KeyButton(
                 if (key.shiftLabel != null) {
                     Text(
                         text = key.shiftLabel,
-                        color = if (shiftHi) blinkColor else visual.shiftLegend,
+                        color = if (shiftHi) blinkShift else visual.shiftLegend,
                         fontSize = if (compact) 7.sp else 9.sp,
                         fontFamily = FontFamily.SansSerif,
                         textAlign = TextAlign.Center
@@ -291,7 +286,7 @@ private fun KeyButton(
                 }
                 Text(
                     text = key.label,
-                    color = if (hypHi) blinkColor else visual.text,
+                    color = if (hypHi) blinkShift else visual.text,
                     fontSize = if (compact) 11.sp else 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = FontFamily.SansSerif,
@@ -300,7 +295,7 @@ private fun KeyButton(
                 if (key.alphaLabel != null) {
                     Text(
                         text = key.alphaLabel,
-                        color = visual.alphaLegend,
+                        color = if (alphaHi) blinkAlpha else visual.alphaLegend,
                         fontSize = if (compact) 7.sp else 9.sp,
                         fontFamily = FontFamily.SansSerif,
                         textAlign = TextAlign.Center
