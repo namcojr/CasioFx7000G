@@ -20,6 +20,9 @@ sealed interface CalcAction {
     object CycleMode : CalcAction     // MODE
     object MemoryAdd : CalcAction     // M+
     object MemorySubtract : CalcAction // SHIFT+M+ (M−)
+    object ClearMemory : CalcAction   // SHIFT+DEL (Mcl – clear every value memory)
+    object Round : CalcAction         // SHIFT+0 (Rnd – round to display precision)
+    object Eng : CalcAction           // SHIFT+(−) (engineering notation)
     object Graph : CalcAction         // GRAPH
     object Range : CalcAction         // RANGE (graph window editor)
     object OpenModeMenu : CalcAction  // SHIFT+MODE (Norm/Fix/Sci setup)
@@ -179,6 +182,9 @@ class CalculatorState {
             CalcAction.CycleMode -> cycleMode()
             CalcAction.MemoryAdd -> memoryAdd()
             CalcAction.MemorySubtract -> memorySubtract()
+            CalcAction.ClearMemory -> clearAllVariables()
+            CalcAction.Round -> roundResult()
+            CalcAction.Eng -> engResult()
             CalcAction.Graph -> plotGraph()
             CalcAction.Range -> enterRange()
             CalcAction.OpenModeMenu -> openModeMenu()
@@ -390,19 +396,46 @@ class CalculatorState {
 
     /**
      * The optimum window for a recognised built-in graph, or null when the
-     * user's current window should be kept. Only the circular trig functions
-     * (sin/cos/tan of X) auto-range, matching the original fx-7000G Bltin
-     * ranges of ±360° (Xscl 180), Ymax 1.6, Yscl 0.5 — converted for RAD/GRA.
+     * user's current window should be kept. On the real fx-7000G every built-in
+     * (Bltin) graph auto-sets its ranges to optimum values before drawing, so
+     * the curve always fills the screen regardless of the previous window. Here
+     * we recognise the eight preset functions (and their common typed variants)
+     * and hand back a window that shows the whole curve. Trig auto-range is
+     * angle-mode aware; the rest use fixed windows chosen to frame the curve.
      */
     private fun builtinWindow(rawExpr: String): GraphWindow? {
         val e = rawExpr.replace(" ", "").removeSuffix(")")
-        val isTrig = e == "sin(X" || e == "cos(X" || e == "tan(X" ||
-            e == "sinX" || e == "cosX" || e == "tanX"
-        if (!isTrig) return null
-        return when (angleMode) {
-            AngleMode.DEG -> GraphWindow(-360.0, 360.0, 180.0, -1.6, 1.6, 0.5)
-            AngleMode.RAD -> GraphWindow(-2 * PI, 2 * PI, PI / 2, -1.6, 1.6, 0.5)
-            AngleMode.GRA -> GraphWindow(-400.0, 400.0, 200.0, -1.6, 1.6, 0.5)
+        return when {
+            e == "sin(X" || e == "cos(X" || e == "tan(X" ||
+                e == "sinX" || e == "cosX" || e == "tanX" -> when (angleMode) {
+                AngleMode.DEG -> GraphWindow(-360.0, 360.0, 180.0, -1.6, 1.6, 0.5)
+                AngleMode.RAD -> GraphWindow(-2 * PI, 2 * PI, PI / 2, -1.6, 1.6, 0.5)
+                AngleMode.GRA -> GraphWindow(-400.0, 400.0, 200.0, -1.6, 1.6, 0.5)
+            }
+            // Parabola y = X²
+            e == "X\u00B2" || e == "X^2" ->
+                GraphWindow(-4.7, 4.7, 1.0, -3.1, 15.5, 5.0)
+            // Cubic y = X³
+            e == "X^3" || e == "X\u00B3" ->
+                GraphWindow(-4.7, 4.7, 1.0, -30.0, 30.0, 10.0)
+            // Square root y = √X (only defined for X ≥ 0)
+            e == "\u221A(X" || e == "\u221AX" ->
+                GraphWindow(-1.0, 9.4, 1.0, -1.0, 3.1, 1.0)
+            // Reciprocal y = 1/X
+            e == "X\u207B\u00B9" || e == "1/X" || e == "1\u00F7X" ->
+                GraphWindow(-4.7, 4.7, 1.0, -3.1, 3.1, 1.0)
+            // Natural log y = ln X (only defined for X > 0)
+            e == "ln(X" || e == "lnX" ->
+                GraphWindow(-1.0, 8.4, 1.0, -3.1, 3.1, 1.0)
+            // Common log y = log X (only defined for X > 0)
+            e == "log(X" || e == "logX" ->
+                GraphWindow(-1.0, 9.4, 1.0, -3.1, 1.6, 1.0)
+            // Exponentials y = eˣ and y = 10ˣ
+            e == "e^(X" || e == "e^X" ->
+                GraphWindow(-4.7, 4.7, 1.0, -1.0, 20.0, 5.0)
+            e == "10^(X" || e == "10^X" ->
+                GraphWindow(-2.0, 2.0, 1.0, -1.0, 20.0, 5.0)
+            else -> null
         }
     }
 
@@ -526,6 +559,9 @@ class CalculatorState {
         entry = expr
         cursor = entry.length
         traceActive = false
+        // Clear any graph already on screen so plotGraph draws the freshly
+        // picked preset instead of toggling the previous one off.
+        graphBuffer = null
         plotGraph()
     }
 
@@ -698,7 +734,7 @@ class CalculatorState {
     private fun modeMenuInput(text: String) {
         if (text.length != 1) return
         val c = text[0]
-        if (modePrompt != 0) {
+        if (modePrompt == 1 || modePrompt == 2) {
             if (c in '0'..'9') {
                 val n = c - '0'
                 displayFormat = if (modePrompt == 1) {
@@ -717,6 +753,55 @@ class CalculatorState {
             '4' -> modePrompt = 1 // Fix -> await decimal count
             '5' -> modePrompt = 2 // Sci -> await significant digits
             '6' -> { displayFormat = NumberFormatter.DisplayFormat.Norm; closeModeMenu() }
+        }
+    }
+
+    /**
+     * Clears every value memory (A–Z, the accumulation memory M and the graph
+     * variable X). Mirrors the fx-7000G "Mcl" operation, reached with SHIFT DEL.
+     */
+    private fun clearAllVariables() {
+        vars.clear()
+        refreshMemoryFlag()
+    }
+
+    /**
+     * Rounds the current value to the precision shown on the display (the Rnd
+     * function, SHIFT 0). The rounded number becomes the new internal value, so a
+     * following Ans-based calculation uses the shortened figure.
+     */
+    private fun roundResult() {
+        if (baseMode) return
+        try {
+            val value = NumberFormatter.roundToFormat(currentValue(), displayFormat)
+            ans = value
+            result = NumberFormatter.format(value, displayFormat)
+            justEvaluated = true
+            error = false
+        } catch (e: Exception) {
+            result = "Ma ERROR"
+            error = true
+            justEvaluated = false
+        }
+    }
+
+    /**
+     * Reformats the current value in engineering notation (the ENG key, SHIFT of
+     * the negation key): the exponent becomes a multiple of three. The value is
+     * unchanged, only its display.
+     */
+    private fun engResult() {
+        if (baseMode) return
+        try {
+            val value = currentValue()
+            ans = value
+            result = NumberFormatter.formatEng(value)
+            justEvaluated = true
+            error = false
+        } catch (e: Exception) {
+            result = "Ma ERROR"
+            error = true
+            justEvaluated = false
         }
     }
 

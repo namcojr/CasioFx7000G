@@ -39,6 +39,7 @@ import com.retro.fx7000g.calc.CalculatorState
 
 private const val INV = "\u207B\u00B9" // superscript "-1"
 private const val ROOT = "\u02E3\u221A" // x-th root  (ˣ√)
+private const val CBRT = "\u00B3\u221A" // cube root  (³√)
 private const val DEG = "\u00B0"        // degrees
 private const val MIN = "\u2032"        // arc-minutes
 private const val SEC = "\u2033"        // arc-seconds
@@ -81,8 +82,8 @@ private fun keypad(): List<KeyRow> = listOf(
             KeySpec("SHIFT", CalcAction.ToggleShift, Fx7000gColors.KeyShift),
             KeySpec("ALPHA", CalcAction.ToggleAlpha, Fx7000gColors.KeyAlpha),
             KeySpec("hyp", CalcAction.ToggleHyp, Fx7000gColors.KeyFunction),
-            KeySpec("MODE", CalcAction.OpenModeMenu, Fx7000gColors.KeyFunction),
-            KeySpec("DEL", CalcAction.Delete, Fx7000gColors.KeyFunction),
+            KeySpec("MODE", CalcAction.OpenModeMenu, Fx7000gColors.KeyFunction, "Rng", CalcAction.Range),
+            KeySpec("DEL", CalcAction.Delete, Fx7000gColors.KeyFunction, "Mcl", CalcAction.ClearMemory),
             KeySpec("AC", CalcAction.Clear, Fx7000gColors.KeyAc)
         )
     ),
@@ -103,7 +104,7 @@ private fun keypad(): List<KeyRow> = listOf(
             KeySpec("ln", ins("ln("), Fx7000gColors.KeyFunction, "e\u02E3", ins("e^(")).withAlpha("S"),
             KeySpec("x\u00B2", ins("\u00B2"), Fx7000gColors.KeyFunction, ROOT, ins(ROOT)).withAlpha("T"),
             KeySpec("x\u02B8", ins("^"), Fx7000gColors.KeyFunction, "x$INV", ins(INV)).withAlpha("U"),
-            KeySpec("\u221A", ins("\u221A("), Fx7000gColors.KeyFunction, "Rng", CalcAction.Range).withAlpha("V")
+            KeySpec("\u221A", ins("\u221A("), Fx7000gColors.KeyFunction, CBRT, ins("$CBRT(")).withAlpha("V")
         )
     ),
     KeyRow(
@@ -131,7 +132,7 @@ private fun keypad(): List<KeyRow> = listOf(
         keys = listOf(
             KeySpec("7", ins("7"), Fx7000gColors.KeyNumber, "nPr", ins("nPr")).withAlpha("A"),
             KeySpec("8", ins("8"), Fx7000gColors.KeyNumber, "nCr", ins("nCr")).withAlpha("B"),
-            KeySpec("9", ins("9"), Fx7000gColors.KeyNumber, "Ran#", ins("Ran#")).withAlpha("C"),
+            KeySpec("9", ins("9"), Fx7000gColors.KeyNumber).withAlpha("C"),
             KeySpec("\u00F7", ins("\u00F7"), Fx7000gColors.KeyOperator),
             KeySpec("\u00D7", ins("\u00D7"), Fx7000gColors.KeyOperator)
         )
@@ -159,9 +160,9 @@ private fun keypad(): List<KeyRow> = listOf(
     KeyRow(
         heightWeight = NUM_ROW,
         keys = listOf(
-            KeySpec("0", ins("0"), Fx7000gColors.KeyNumber).withAlpha("Z"),
-            KeySpec(".", ins("."), Fx7000gColors.KeyNumber),
-            KeySpec("(-)", ins("\u2212"), Fx7000gColors.KeyNumber),
+            KeySpec("0", ins("0"), Fx7000gColors.KeyNumber, "Rnd", CalcAction.Round).withAlpha("Z"),
+            KeySpec(".", ins("."), Fx7000gColors.KeyNumber, "Ran#", ins("Ran#")),
+            KeySpec("(-)", ins("\u2212"), Fx7000gColors.KeyNumber, "ENG", CalcAction.Eng),
             KeySpec("Ans", ins("Ans"), Fx7000gColors.KeyFunction),
             KeySpec("M+", CalcAction.MemoryAdd, Fx7000gColors.KeyFunction, "M\u2212", CalcAction.MemorySubtract).withAlpha("M")
         )

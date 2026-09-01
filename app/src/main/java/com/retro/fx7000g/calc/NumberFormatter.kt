@@ -49,9 +49,54 @@ object NumberFormatter {
         }
     }
 
+    /**
+     * Engineering notation: the same value with an exponent that is always a
+     * multiple of three, so the mantissa sits in the 1–1000 range. Mirrors the
+     * fx-7000G ENG key (e.g. 1234 → "1.234E3", 0.0001234 → "123.4E-6").
+     */
+    fun formatEng(value: Double): String {
+        if (value == 0.0) return "0"
+        if (value.isNaN() || value.isInfinite()) throw CalcError("range")
+        val abs = abs(value)
+        if (abs >= 1e100) throw CalcError("overflow")
+
+        val bd = BigDecimal(value).round(MathContext(SIG_DIGITS, RoundingMode.HALF_UP))
+        val negative = bd.signum() < 0
+        var mantissa = bd.abs()
+        var exp = 0
+        while (mantissa >= BigDecimal.TEN) { mantissa = mantissa.movePointLeft(1); exp++ }
+        while (mantissa > BigDecimal.ZERO && mantissa < BigDecimal.ONE) { mantissa = mantissa.movePointRight(1); exp-- }
+        // Shift the exponent down to the nearest multiple of three, scaling the
+        // mantissa up to compensate (so it lands between 1 and 1000).
+        val rem = ((exp % 3) + 3) % 3
+        mantissa = mantissa.movePointRight(rem)
+        exp -= rem
+        var m = mantissa.round(MathContext(SIG_DIGITS, RoundingMode.HALF_UP)).toPlainString()
+        if (m.contains('.')) m = m.trimEnd('0').trimEnd('.')
+        val sign = if (negative) "-" else ""
+        return "${sign}${m}E$exp"
+    }
+
+    /**
+     * Rounds [value] to the precision currently shown on the display. Used by the
+     * fx-7000G Rnd function: in Fix the value keeps that many decimals, in Sci
+     * that many significant figures, and in Norm the standard 10 significant
+     * digits. The rounded number becomes the new internal value.
+     */
+    fun roundToFormat(value: Double, format: DisplayFormat): Double {
+        if (value == 0.0 || value.isNaN() || value.isInfinite()) return value
+        return when (format) {
+            is DisplayFormat.Fix ->
+                BigDecimal(value).setScale(format.decimals.coerceIn(0, 9), RoundingMode.HALF_UP).toDouble()
+            is DisplayFormat.Sci ->
+                BigDecimal(value).round(MathContext(format.digits.coerceIn(1, 10), RoundingMode.HALF_UP)).toDouble()
+            DisplayFormat.Norm ->
+                BigDecimal(value).round(MathContext(SIG_DIGITS, RoundingMode.HALF_UP)).toDouble()
+        }
+    }
+
     /** Fix mode: exactly [decimals] digits after the point. */
-    private fun fixed(value: Double, decimals: Int): String {
-        val d = decimals.coerceIn(0, 9)
+    private fun fixed(value: Double, decimals: Int): String {        val d = decimals.coerceIn(0, 9)
         val bd = BigDecimal(value).setScale(d, RoundingMode.HALF_UP)
         // Avoid an ugly "-0.00".
         val s = bd.toPlainString()

@@ -53,6 +53,7 @@ EXE_C = (44, 110, 96)
 # Glyph shorthands (exact display glyphs the app inserts)
 INV = "\u207B\u00B9"        # superscript -1
 XROOT = "\u02E3\u221A"      # x-th root
+CBRT = "\u00B3\u221A"       # cube root
 SQRT = "\u221A"
 PI = "\u03C0"
 MUL = "\u00D7"
@@ -826,6 +827,25 @@ pdf.note(
     "display prompts for the digit count \u2014 just press a number key.",
     label="Opening SET")
 
+pdf.start_section("3-3  ENG and Rnd", level=1)
+pdf.h2("3-3  Engineering notation (ENG) and rounding (Rnd)")
+pdf.idx("ENG", "engineering notation", "Rnd", "round", "display precision")
+pdf.body(
+    "ENG (SHIFT of the (-) key) rewrites the value on the display in engineering "
+    "notation: the mantissa is shown with an exponent forced to a multiple of three, "
+    "so the power always matches an SI prefix (10\u00b3 kilo, 10" + INV + " milli, and "
+    "so on). Rnd (SHIFT of the 0 key) rounds the displayed value to the current "
+    "display precision \u2014 Fix decimals, Sci significant figures, or 10 digits in "
+    "Norm \u2014 and keeps that rounded number as the internal value, so later "
+    "calculations use exactly what you see.")
+pdf.example("Example 6a \u2014 ENG and Rnd", [
+    ("1234  EXE  [ENG]", "1.234E3"),
+    ("0.0001234  EXE  [ENG]", "123.4E-6"),
+    ("[Fix 2]  2" + DIV + "3  EXE", "0.67"),
+    ("[Rnd]  Ans" + MUL + "3  EXE", "2.01"),
+], note="After Rnd in Fix 2 the stored value is 0.67, so Ans" + MUL +
+   "3 gives 2.01 rather than 2.00.")
+
 
 # --------------------------------------------------------------------------- #
 #  CHAPTER 4 - SCIENTIFIC FUNCTIONS
@@ -880,7 +900,8 @@ pdf.idx("power", "square", "square root", "cube root", "reciprocal", "x^y")
 pdf.body(
     "The calculator offers x" + SUP2 + " (square), x" + SUPX + " (general power, the "
     "^ key), " + SQRT + " (square root), " + XROOT + " (the index-th root, SHIFT of "
-    "x" + SUP2 + "), and x" + INV + " (reciprocal, SHIFT of the power key). Powers are "
+    "x" + SUP2 + "), " + CBRT + " (cube root, SHIFT of the " + SQRT + " key) and x" +
+    INV + " (reciprocal, SHIFT of the power key). Powers are "
     "evaluated right-to-left, so 2^3^2 is 2^(3^2) = 512.")
 pdf.example("Example 10 \u2014 powers and roots", [
     ("5" + SUP2 + "  EXE", "25"),
@@ -888,8 +909,10 @@ pdf.example("Example 10 \u2014 powers and roots", [
     ("2^3^2  EXE", "512"),
     (SQRT + "(2  EXE", "1.414213562"),
     ("3" + XROOT + "8  EXE", "2"),
+    (CBRT + "(27  EXE", "3"),
     ("4" + INV + "  EXE", "0.25"),
-], note="3" + XROOT + "8 is the cube root of 8; the index is entered before the " + XROOT + " symbol.")
+], note="3" + XROOT + "8 is the index-th root (cube root here); " + CBRT +
+   " is the dedicated cube-root prefix reached with SHIFT " + ARR + " " + SQRT + ".")
 
 pdf.start_section("4-5  Factorial, percent and combinatorics", level=1)
 pdf.h2("4-5  Factorial, percent, nPr and nCr")
@@ -965,6 +988,11 @@ pdf.example("Example 15 \u2014 storing and recalling", [
     ("A" + MUL + "2  EXE", "10"),
     ("A" + SUP2 + "+1  EXE", "26"),
 ], note="Type A with ALPHA " + ARR + " (the 7 key's red legend), and " + ARR + " with SHIFT " + ARR + " X.")
+pdf.note(
+    "To wipe every variable at once (A\u2013Z, the independent memory M and the graph "
+    "variable X), press SHIFT then DEL \u2014 the Mcl operation. The M flag clears and "
+    "each variable then reads back as 0.",
+    label="Clearing all variables")
 
 pdf.start_section("5-2  Independent memory (M+ and M)", level=1)
 pdf.h2("5-2  Independent memory \u2014 M+, M\u2212 and M")
@@ -1173,23 +1201,23 @@ key_rows = [
     ("SHIFT", "select orange legend", "\u2014"),
     ("ALPHA", "select red letter", "\u2014"),
     ("hyp", "sinh/cosh/tanh prefix", "\u2014"),
-    ("MODE", "cycle DEG/RAD/GRA", "SET (Norm/Fix/Sci setup)"),
-    ("DEL / AC", "delete token / clear all", "\u2014"),
+    ("MODE", "cycle DEG/RAD/GRA", "SET (setup)  \u00b7  Rng (Range editor)"),
+    ("DEL / AC", "delete token / clear all", "Mcl (clear all memories) / \u2014"),
     ("sin cos tan", "trig functions", "sin" + INV + " cos" + INV + " tan" + INV + "  \u00b7  ALPHA L N O"),
     ("(  )", "parentheses", ")\u2192 , (comma)  \u00b7  ALPHA P Q"),
     ("log  ln", "base-10 / natural log", "10" + SUPX + "  e" + SUPX + "  \u00b7  ALPHA R S"),
     ("x" + SUP2 + "  x" + SUPX, "square / power", XROOT + "  x" + INV + "  \u00b7  ALPHA T U"),
-    (SQRT, "square root", "Rng (Range editor)  \u00b7  ALPHA V"),
+    (SQRT, "square root", CBRT + " (cube root)  \u00b7  ALPHA V"),
     ("x!", "factorial", "ALPHA W"),
     ("Abs Int Frac", "abs / integer / fraction", SEC + "  " + DEG + "  " + MIN + "  \u00b7  ALPHA Y"),
     ("X", "graph variable X", ARR + " (store)"),
     ("DEC HEX BIN OCT", "select number base", "and  or  xor  Not"),
     ("Graph", "plot Y = f(X)", "Bltin (built-in graphs)"),
-    ("7 8 9", "digits", "nPr  nCr  Ran#  \u00b7  ALPHA A B C"),
+    ("7 8 9", "digits", "nPr  nCr  \u00b7  ALPHA A B C"),
     ("4 5 6", "digits", "Pol  Rec  %  \u00b7  ALPHA D E F"),
     ("1 2 3", "digits", "ALPHA G H I"),
     (PI + "  EXP", "pi / exponent (E)", "e  \u00b7  ALPHA J K"),
-    ("0 . (-)", "digit / point / sign", "ALPHA Z"),
+    ("0 . (-)", "digit / point / sign", "Rnd  Ran#  ENG  \u00b7  ALPHA Z"),
     ("Ans", "last answer", "\u2014"),
     ("M+", "add to memory M", "M (recall)  \u00b7  ALPHA M"),
     (LARR + " " + RARR + "  EXE", "cursor / evaluate", "\u2014"),

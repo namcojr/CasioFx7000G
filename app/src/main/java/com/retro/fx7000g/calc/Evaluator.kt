@@ -141,6 +141,7 @@ object Evaluator {
                 c == '!' -> { tokens += Token.Factorial; i++ }
                 src.startsWith("\u02E3\u221A", i) -> { tokens += Token.Root; i += 2 } // ˣ√
                 src.startsWith("\u207B\u00B9", i) -> { tokens += Token.Reciprocal; i += 2 } // ⁻¹
+                src.startsWith("\u00B3\u221A", i) -> { tokens += Token.Fn("cbrt"); i += 2 } // ³√ cube root
                 c == '\u221A' -> { tokens += Token.Sqrt; i++ } // √
                 c == '%' -> { tokens += Token.Percent; i++ }
                 c == ',' -> { tokens += Token.Comma; i++ }
@@ -334,6 +335,7 @@ object Evaluator {
             "abs" -> abs(arg)
             "int" -> truncate(arg)
             "frac" -> arg - truncate(arg)
+            "cbrt" -> Math.cbrt(arg)
             else -> throw CalcError("fn")
         }
 
