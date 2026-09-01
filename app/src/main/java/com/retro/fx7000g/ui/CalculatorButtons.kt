@@ -74,7 +74,7 @@ private fun keypad(): List<KeyRow> = listOf(
             KeySpec("SHIFT", CalcAction.ToggleShift, Fx7000gColors.KeyShift),
             KeySpec("ALPHA", CalcAction.ToggleAlpha, Fx7000gColors.KeyAlpha),
             KeySpec("hyp", CalcAction.ToggleHyp, Fx7000gColors.KeyFunction),
-            KeySpec("MODE", CalcAction.CycleMode, Fx7000gColors.KeyFunction, "SET", CalcAction.OpenModeMenu),
+            KeySpec("MODE", CalcAction.OpenModeMenu, Fx7000gColors.KeyFunction),
             KeySpec("DEL", CalcAction.Delete, Fx7000gColors.KeyFunction),
             KeySpec("AC", CalcAction.Clear, Fx7000gColors.KeyAc)
         )

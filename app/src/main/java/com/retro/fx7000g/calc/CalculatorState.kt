@@ -74,7 +74,9 @@ class CalculatorState {
     private var justEvaluated = false
     private var error = false
     private var rangeFresh = false
-    private var modePrompt = 0 // 0 none, 1 awaiting Fix decimals, 2 awaiting Sci digits
+    // Observable so the menu's prompt line ("Fix decimals?" / "Sci digits?")
+    // recomposes on the first key press rather than requiring a second.
+    private var modePrompt by mutableStateOf(0) // 0 none, 1 awaiting Fix decimals, 2 awaiting Sci digits
 
     /** Expressions currently drawn on the graph (for overlay + trace). */
     private val graphExprs = mutableListOf<String>()
