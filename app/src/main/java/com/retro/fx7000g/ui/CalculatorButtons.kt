@@ -1,12 +1,6 @@
 package com.retro.fx7000g.ui
 
 import android.view.HapticFeedbackConstants
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -218,33 +213,18 @@ private fun KeyButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val shiftHi = shiftActive && key.shifted != null
-    val alphaHi = alphaActive && key.alphaAction != null
-    val hypHi = hypActive && key.hyp
     val view = LocalView.current
     val theme = LocalFx7000gTheme.current
+    val largeMainKey = !compact && key.label in setOf(
+        "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "(-)",
+        "Ans", "EXP", "M+", "\u00D7", "\u00F7", "+", "\u2212",
+        "\u03C0", "\u25C4", "\u25BA"
+    )
 
     // Resolve the base look from the theme. SHIFT, ALPHA and HYP no longer
     // recolor the whole key; instead the relevant text blinks (see below).
     val base = theme.keyVisual(roleFor(key.color))
     val visual = base
-
-    // White/accent blink used to signal the currently-armed prefix action.
-    // SHIFT and HYP blink white<->shift-orange; ALPHA blinks white<->alpha-purple.
-    val blink = rememberInfiniteTransition(label = "prefixBlink")
-    val blinkPhase by blink.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 600, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "prefixBlinkPhase"
-    )
-    val blinkOn = blinkPhase < 0.5f
-    val blinkShift = if (blinkOn) Color.White else Fx7000gColors.KeyShift
-    val blinkAlpha = if (blinkOn) Color.White else Fx7000gColors.KeyAlpha
-
     val shape = RoundedCornerShape(if (compact) 5.dp else 7.dp)
     val lift = if (compact) 2.dp else 3.dp
 
@@ -272,35 +252,103 @@ private fun KeyButton(
                 .padding(2.dp),
             contentAlignment = Alignment.Center
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                if (key.shiftLabel != null) {
+                if (key.label == "hyp" || key.label == "MODE" || key.label == "DEL") {
+                    // Keep the special function keys exactly as they are.
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        if (key.shiftLabel != null) {
+                            Text(
+                                text = key.shiftLabel,
+                                color = visual.shiftLegend,
+                                fontSize = if (compact) 7.sp else 9.sp,
+                                fontFamily = FontFamily.SansSerif,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+
+                        Text(
+                            text = key.label,
+                            color = visual.text,
+                            fontSize = if (compact) 11.sp else 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            fontFamily = FontFamily.SansSerif,
+                            textAlign = TextAlign.Center
+                        )
+
+                        if (key.alphaLabel != null) {
+                            Text(
+                                text = key.alphaLabel,
+                                color = visual.alphaLegend,
+                                fontSize = if (compact) 7.sp else 9.sp,
+                                fontFamily = FontFamily.SansSerif,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                } else {
+                    // Fixed three-position layout:
+                    // SHIFT = top, MAIN = center, ALPHA = bottom.
+                    if (key.shiftLabel != null) {
+                        Text(
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .then(
+                                    if (largeMainKey) {
+                                        Modifier.offset(y = 4.dp)
+                                    } else {
+                                        Modifier
+                                    }
+                                ),
+                            text = key.shiftLabel,
+                            color = visual.shiftLegend,
+                            fontSize = if (compact) 7.sp else 9.sp,
+                            fontFamily = FontFamily.SansSerif,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+
                     Text(
-                        text = key.shiftLabel,
-                        color = if (shiftHi) blinkShift else visual.shiftLegend,
-                        fontSize = if (compact) 7.sp else 9.sp,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .then(
+                                Modifier
+                            ),
+                        text = key.label,
+                        color = visual.text,
+                        fontSize = when {
+                            compact -> 11.sp
+                            largeMainKey -> 20.sp
+                            else -> 16.sp
+                        },
+                        fontWeight = FontWeight.SemiBold,
                         fontFamily = FontFamily.SansSerif,
                         textAlign = TextAlign.Center
                     )
-                }
-                Text(
-                    text = key.label,
-                    color = if (hypHi) blinkShift else visual.text,
-                    fontSize = if (compact) 11.sp else 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    fontFamily = FontFamily.SansSerif,
-                    textAlign = TextAlign.Center
-                )
-                if (key.alphaLabel != null) {
-                    Text(
-                        text = key.alphaLabel,
-                        color = if (alphaHi) blinkAlpha else visual.alphaLegend,
-                        fontSize = if (compact) 7.sp else 9.sp,
-                        fontFamily = FontFamily.SansSerif,
-                        textAlign = TextAlign.Center
-                    )
+
+                    if (key.alphaLabel != null) {
+                        Text(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .then(
+                                    if (largeMainKey) {
+                                        Modifier.offset(y = (-4).dp)
+                                    } else {
+                                        Modifier
+                                    }
+                                ),
+                            text = key.alphaLabel,
+                            color = visual.alphaLegend,
+                            fontSize = if (compact) 7.sp else 9.sp,
+                            fontFamily = FontFamily.SansSerif,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
         }

@@ -176,9 +176,9 @@ class CalculatorState {
             CalcAction.Evaluate -> evaluate()
             CalcAction.Clear -> clear()
             CalcAction.Delete -> delete()
-            CalcAction.ToggleShift -> { shift = !shift; if (shift) alpha = false }
-            CalcAction.ToggleAlpha -> { alpha = !alpha; if (alpha) shift = false }
-            CalcAction.ToggleHyp -> hyp = !hyp
+            CalcAction.ToggleShift -> { shift = !shift; if (shift) { alpha = false; hyp = false }}
+            CalcAction.ToggleAlpha -> { alpha = !alpha; if (alpha) { shift = false; hyp = false }}
+            CalcAction.ToggleHyp -> { hyp = !hyp; if (hyp) { shift = false; alpha = false }}
             CalcAction.CycleMode -> cycleMode()
             CalcAction.MemoryAdd -> memoryAdd()
             CalcAction.MemorySubtract -> memorySubtract()

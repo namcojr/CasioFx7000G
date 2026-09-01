@@ -76,44 +76,51 @@ fun CalculatorScreen(modifier: Modifier = Modifier) {
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(theme.bodyEdge)
-        ) {
-            val bodyBackground = if (theme.useBodyTexture) {
-                Modifier.paint(
-                    painterResource(R.drawable.aluminum),
-                    contentScale = ContentScale.Crop
+                .then(
+                    if (theme.useBodyTexture) {
+                        Modifier.paint(
+                            painterResource(R.drawable.aluminum),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Modifier.background(theme.body)
+                    }
                 )
-            } else {
-                Modifier.background(theme.body)
-            }
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .then(
                         if (insetsEnabled) {
                             Modifier.windowInsetsPadding(
-                                WindowInsets.displayCutout.union(WindowInsets.navigationBars)
+                                WindowInsets.displayCutout.union(
+                                    WindowInsets.navigationBars
+                                )
                             )
                         } else {
                             Modifier
                         }
                     )
                     .padding(10.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .then(bodyBackground)
                     .padding(14.dp)
             ) {
                 BrandingHeader(
                     onToggleGraphics = {
                         insetsEnabled = !insetsEnabled
-                        prefs.edit().putBoolean(KEY_INSETS_ENABLED, insetsEnabled).apply()
+                        prefs.edit()
+                            .putBoolean(KEY_INSETS_ENABLED, insetsEnabled)
+                            .apply()
                     },
                     onToggleTheme = {
                         classicTheme = !classicTheme
-                        prefs.edit().putBoolean(KEY_CLASSIC_THEME, classicTheme).apply()
+                        prefs.edit()
+                            .putBoolean(KEY_CLASSIC_THEME, classicTheme)
+                            .apply()
                     }
                 )
+
                 Spacer(Modifier.height(10.dp))
+
                 LcdDisplay(
                     entry = state.entry,
                     result = state.result,
@@ -132,7 +139,9 @@ fun CalculatorScreen(modifier: Modifier = Modifier) {
                     traceRow = state.traceRow,
                     traceText = state.traceText
                 )
+
                 Spacer(Modifier.height(16.dp))
+
                 Keypad(
                     state = state,
                     modifier = Modifier
