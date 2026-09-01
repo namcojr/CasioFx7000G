@@ -18,6 +18,7 @@ sealed interface CalcAction {
     object ToggleHyp : CalcAction     // hyp prefix (sinh/cosh/tanh)
     object CycleMode : CalcAction     // MODE
     object MemoryAdd : CalcAction     // M+
+    object MemorySubtract : CalcAction // SHIFT+M+ (M−)
     object Graph : CalcAction         // GRAPH
     object Range : CalcAction         // RANGE (graph window editor)
     object OpenModeMenu : CalcAction  // SHIFT+MODE (Norm/Fix/Sci setup)
@@ -174,6 +175,7 @@ class CalculatorState {
             CalcAction.ToggleHyp -> hyp = !hyp
             CalcAction.CycleMode -> cycleMode()
             CalcAction.MemoryAdd -> memoryAdd()
+            CalcAction.MemorySubtract -> memorySubtract()
             CalcAction.Graph -> plotGraph()
             CalcAction.Range -> enterRange()
             CalcAction.OpenModeMenu -> openModeMenu()
@@ -302,10 +304,15 @@ class CalculatorState {
         }
     }
 
-    private fun memoryAdd() {
+    private fun memoryAdd() = memoryAccumulate(+1)
+
+    private fun memorySubtract() = memoryAccumulate(-1)
+
+    /** Adds (sign = +1) or subtracts (sign = -1) the current value to memory M. */
+    private fun memoryAccumulate(sign: Int) {
         try {
             val value = currentValue()
-            vars['M'] = (vars['M'] ?: 0.0) + value
+            vars['M'] = (vars['M'] ?: 0.0) + sign * value
             result = if (baseMode) NumberFormatter.formatBase(value.toLong(), numberBase)
             else NumberFormatter.format(value, displayFormat)
             ans = value
@@ -341,7 +348,23 @@ class CalculatorState {
 
     /** Plots the current entry as Y = f(X), overlaying it on any existing curves. */
     private fun plotGraph() {
-        if (entry.isBlank()) return
+        // Toggle: if the graph is already on screen, switch back to the
+        // calculation buffer. The accumulated curves are kept so the next
+        // Graph press can bring them straight back.
+        if (graphBuffer != null) {
+            graphBuffer = null
+            traceActive = false
+            return
+        }
+        // Nothing new to add (blank entry, or the entry is already the most
+        // recent curve): just re-show the existing graph if there is one.
+        if (entry.isBlank() || graphExprs.lastOrNull() == entry) {
+            if (graphExprs.isNotEmpty()) {
+                traceActive = false
+                rebuildGraph()
+            }
+            return
+        }
         if (xMax <= xMin || yMax <= yMin) {
             result = "Ma ERROR"; error = true; graphBuffer = null; return
         }
@@ -667,7 +690,10 @@ class CalculatorState {
 
     /** Evaluates the current entry in the active mode, falling back to Ans. */
     private fun currentValue(): Double = when {
-        entry.isBlank() -> ans
+        // A blank entry means Ans only right after an evaluation/conversion;
+        // once AC (or deleting everything) clears the display the working value
+        // is 0, matching the real fx-7000G.
+        entry.isBlank() -> if (justEvaluated) ans else 0.0
         baseMode -> Evaluator.evaluateBase(entry, numberBase, ans.toLong()).toDouble()
         hasLogicalOp(entry) -> Evaluator.evaluateBase(entry, 10, ans.toLong()).toDouble()
         else -> Evaluator.evaluate(entry, angleMode, ans, vars)

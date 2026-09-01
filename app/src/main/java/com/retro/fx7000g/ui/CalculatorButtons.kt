@@ -2,6 +2,8 @@ package com.retro.fx7000g.ui
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,11 +14,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontFamily
@@ -153,7 +156,7 @@ private fun keypad(): List<KeyRow> = listOf(
             KeySpec(".", ins("."), Fx7000gColors.KeyNumber),
             KeySpec("(-)", ins("\u2212"), Fx7000gColors.KeyNumber),
             KeySpec("Ans", ins("Ans"), Fx7000gColors.KeyFunction),
-            KeySpec("M+", CalcAction.MemoryAdd, Fx7000gColors.KeyFunction, "M", ins("M")).withAlpha("M")
+            KeySpec("M+", CalcAction.MemoryAdd, Fx7000gColors.KeyFunction, "M\u2212", CalcAction.MemorySubtract).withAlpha("M")
         )
     ),
     KeyRow(
@@ -211,23 +214,52 @@ private fun KeyButton(
     val alphaHi = alphaActive && key.alphaAction != null
     val hypHi = hypActive && key.hyp
     val view = LocalView.current
-    Surface(
-        color = when {
-            hypHi -> Fx7000gColors.KeyShift
-            shiftHi -> Fx7000gColors.KeyShift.copy(alpha = 0.55f)
-            alphaHi -> Fx7000gColors.KeyAlpha.copy(alpha = 0.55f)
-            else -> key.color
-        },
-        shape = RoundedCornerShape(if (compact) 5.dp else 7.dp),
-        border = BorderStroke(1.dp, Fx7000gColors.KeyBorder),
+    val theme = LocalFx7000gTheme.current
+
+    // Resolve the base look from the theme, then overlay the active-prefix
+    // highlight (hyp / shift / alpha) if this key participates in it.
+    val base = theme.keyVisual(roleFor(key.color))
+    val visual = when {
+        hypHi -> base.copy(
+            faceTop = Fx7000gColors.KeyShift,
+            faceBottom = Fx7000gColors.KeyShift,
+            text = Color.White
+        )
+        shiftHi -> base.copy(
+            faceTop = Fx7000gColors.KeyShift.copy(alpha = 0.75f),
+            faceBottom = Fx7000gColors.KeyShift.copy(alpha = 0.55f)
+        )
+        alphaHi -> base.copy(
+            faceTop = Fx7000gColors.KeyAlpha.copy(alpha = 0.75f),
+            faceBottom = Fx7000gColors.KeyAlpha.copy(alpha = 0.55f)
+        )
+        else -> base
+    }
+
+    val shape = RoundedCornerShape(if (compact) 5.dp else 7.dp)
+    val lift = if (compact) 2.dp else 3.dp
+
+    Box(
         modifier = modifier.clickable {
             view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
             onClick()
         }
     ) {
+        // Bevel/base layer: sits behind and peeks out at the bottom to fake depth.
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clip(shape)
+                .background(visual.bevel)
+        )
+        // Raised top face with a vertical highlight-to-shadow gradient.
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(bottom = lift)
+                .clip(shape)
+                .background(Brush.verticalGradient(listOf(visual.faceTop, visual.faceBottom)))
+                .border(BorderStroke(1.dp, visual.border), shape)
                 .padding(2.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -238,7 +270,7 @@ private fun KeyButton(
                 if (key.shiftLabel != null) {
                     Text(
                         text = key.shiftLabel,
-                        color = if (shiftHi) Color.White else Fx7000gColors.KeyShiftLegend,
+                        color = if (shiftHi) Color.White else visual.shiftLegend,
                         fontSize = if (compact) 7.sp else 9.sp,
                         fontFamily = FontFamily.SansSerif,
                         textAlign = TextAlign.Center
@@ -246,7 +278,7 @@ private fun KeyButton(
                 }
                 Text(
                     text = key.label,
-                    color = Fx7000gColors.KeyText,
+                    color = visual.text,
                     fontSize = if (compact) 11.sp else 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = FontFamily.SansSerif,
@@ -255,7 +287,7 @@ private fun KeyButton(
                 if (key.alphaLabel != null) {
                     Text(
                         text = key.alphaLabel,
-                        color = if (alphaHi) Color.White else Fx7000gColors.KeyAlphaLegend,
+                        color = if (alphaHi) Color.White else visual.alphaLegend,
                         fontSize = if (compact) 7.sp else 9.sp,
                         fontFamily = FontFamily.SansSerif,
                         textAlign = TextAlign.Center

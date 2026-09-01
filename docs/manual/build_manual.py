@@ -684,6 +684,25 @@ pdf.key_sequence([("2", "num"), ("+", "op"), ("3", "num"),
 pdf.body("The sequence above computes 2 + 3 " + MUL + " 4. Because " + MUL +
          " binds tighter than +, the answer is 14 (not 20).")
 
+pdf.start_section("1-5  Appearance and screen fit", level=1)
+pdf.h2("1-5  Appearance and screen fit")
+pdf.idx("theme", "appearance", "aluminium skin", "screen fit", "display cut-out")
+pdf.body(
+    "Two controls on the calculator's face let you change how the app looks and how "
+    "it fits your device. Both remember their setting and survive restarting the app.")
+pdf.bullet(
+    "Theme — press and hold the CASIO fx-7000G name at the top of the body to switch "
+    "between the default dark-grey theme and a classic brushed-aluminium skin. The "
+    "classic skin uses cream function keys with black lettering and black number "
+    "keys with white lettering, while the AC, EXE, SHIFT and ALPHA keys keep their "
+    "signature colours.")
+pdf.bullet(
+    "Screen fit — tap the red GRAPHICS badge to the right of the name to change how "
+    "much of the screen the calculator uses. When it is on, the layout stays clear "
+    "of the status/notification bar, the navigation bar and any camera cut-out; when "
+    "it is off, the calculator stretches edge-to-edge to fill the whole display.")
+pdf.note("Both toggles are cosmetic — they never change a calculation or the value stored in memory.")
+
 
 # --------------------------------------------------------------------------- #
 #  CHAPTER 2 - BASIC CALCULATIONS
@@ -948,17 +967,19 @@ pdf.example("Example 15 \u2014 storing and recalling", [
 ], note="Type A with ALPHA " + ARR + " (the 7 key's red legend), and " + ARR + " with SHIFT " + ARR + " X.")
 
 pdf.start_section("5-2  Independent memory (M+ and M)", level=1)
-pdf.h2("5-2  Independent memory \u2014 M+ and M")
-pdf.idx("independent memory", "M+", "memory", "M flag")
+pdf.h2("5-2  Independent memory \u2014 M+, M\u2212 and M")
+pdf.idx("independent memory", "M+", "M-", "memory", "M flag")
 pdf.body(
-    "The M+ key adds the current value to the independent memory M. Recall M with "
-    "SHIFT M+ (the M legend). Whenever M holds a non-zero value the M flag is shown "
-    "on the status line. Clear it by storing 0 into M (0 " + ARR + " M).")
+    "The M+ key adds the current value to the independent memory M; SHIFT M+ (the "
+    "M\u2212 legend) subtracts it instead. Recall M with ALPHA M+ (the red M legend). "
+    "Whenever M holds a non-zero value the M flag is shown on the status line. Clear "
+    "it by storing 0 into M (0 " + ARR + " M).")
 pdf.example("Example 16 \u2014 accumulating a running total", [
     ("250  M+", "250"),
     ("120  M+", "120"),
-    ("M  EXE", "370"),
-], note="Each M+ adds to M; recall the total with the M legend (SHIFT M+).")
+    ("30  SHIFT M+", "30"),
+    ("ALPHA M  EXE", "340"),
+], note="M+ adds and SHIFT M+ (M\u2212) subtracts; recall the total with ALPHA M+.")
 
 
 # --------------------------------------------------------------------------- #
@@ -1015,7 +1036,9 @@ pdf.body(
     "Enter an expression that uses the variable X (the X key), then press Graph. The "
     "calculator plots Y = f(X) across the display, drawing the axes with tick marks. "
     "Graph again with a new expression to overlay it on the previous curves \u2014 up "
-    "to six curves are kept. Pressing any ordinary key returns you to the "
+    "to six curves are kept. Press Graph while a graph is showing to toggle back to "
+    "the calculation screen; the curves are remembered, so pressing Graph once more "
+    "brings them straight back. Pressing any ordinary key also returns you to the "
     "calculation screen.")
 pdf.key_sequence([("sin", "fn"), ("X", "fn"), ("Graph", "fn")])
 pdf.need(52)
