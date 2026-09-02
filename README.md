@@ -3,6 +3,8 @@
 A faithful recreation of the 1985 CASIO fx-7000G scientific calculator for Android,
 built with Kotlin + Jetpack Compose.
 
+<img src="https://i.imgur.com/kBVZ8k6.jpeg" width=300> <img src="https://i.imgur.com/1yHqDs6.jpeg" width=300> <img src="https://i.imgur.com/K3ScQvB.jpeg" width=300>
+
 ## Highlights
 - **Real dot-matrix LCD** — rendered on an actual 96×64 pixel grid with a hand-built
   5×7 font and the classic green tint (see `ui/DotFont.kt`, `ui/LcdDisplay.kt`).
