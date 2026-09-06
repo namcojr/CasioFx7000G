@@ -19,7 +19,7 @@ object Fx7000gColors {
     private val lcdOffBase  = Color(0xFF8FA882)  // OFF pixel at normal contrast (clearly visible)
     private val lcdOnBase   = Color(0xFF1E2614)  // ON  pixel at normal contrast (deep dark green)
     private val lcdOffDark  = Color(0xFF414D2E)  // OFF pixel at maximum contrast (both states dark)
-    private val lcdOnDark   = Color(0xFF252D18)  // ON  pixel at maximum contrast
+    private val lcdOnDark   = Color(0xFF0A0F07)  // ON  pixel at maximum contrast (deep near-black green)
 
     /**
      * Returns `(dotOff, dotOn)` adjusted for [contrast] in `[0f, 1f]`.
