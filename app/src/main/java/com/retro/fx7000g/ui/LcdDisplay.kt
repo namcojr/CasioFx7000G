@@ -2,6 +2,7 @@ package com.retro.fx7000g.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,11 +10,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 
 /** Logical dot-matrix resolution of the FX-7000G LCD. */
@@ -45,6 +50,8 @@ fun LcdDisplay(
     traceCol: Int = -1,
     traceRow: Int = -1,
     traceText: String = "",
+    contrast: Float = 0.5f,
+    onContrastChange: (Float) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val buffer = remember(
@@ -61,21 +68,37 @@ fun LcdDisplay(
         }
     }
 
+    // Stable references so the pointerInput block always sees the latest values
+    // without restarting the gesture recognizer on every recomposition.
+    val currentContrast by rememberUpdatedState(contrast)
+    val currentOnContrastChange by rememberUpdatedState(onContrastChange)
+
+    // Compute the two pixel colors outside the Canvas to avoid recomputing per-draw.
+    val (dotOff, dotOn) = remember(contrast) { Fx7000gColors.lcdDotColors(contrast) }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(COLS.toFloat() / ROWS.toFloat())
             .clip(RoundedCornerShape(6.dp))
             .background(Fx7000gColors.LcdBackground)
+            .pointerInput(Unit) {
+                // Swipe right → increase contrast, swipe left → decrease contrast.
+                // The drag range spans roughly the full LCD width for a 0→1 sweep.
+                detectHorizontalDragGestures { _, dragAmount ->
+                    val delta = dragAmount / size.width.toFloat()
+                    currentOnContrastChange((currentContrast + delta).coerceIn(0f, 1f))
+                }
+            }
             .padding(10.dp)
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            drawMatrix(buffer)
+            drawMatrix(buffer, dotOff, dotOn)
         }
     }
 }
 
-private fun DrawScope.drawMatrix(buffer: BooleanArray) {
+private fun DrawScope.drawMatrix(buffer: BooleanArray, dotOff: Color, dotOn: Color) {
     val dotW = size.width / COLS
     val dotH = size.height / ROWS
     val radius = minOf(dotW, dotH) * 0.42f
@@ -84,7 +107,7 @@ private fun DrawScope.drawMatrix(buffer: BooleanArray) {
             val on = buffer[y * COLS + x]
             val center = Offset(x * dotW + dotW / 2f, y * dotH + dotH / 2f)
             drawCircle(
-                color = if (on) Fx7000gColors.LcdDotOn else Fx7000gColors.LcdDotOff,
+                color = if (on) dotOn else dotOff,
                 radius = radius,
                 center = center
             )

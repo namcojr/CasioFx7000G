@@ -46,6 +46,7 @@ import com.retro.fx7000g.calc.CalculatorState
 private const val PREFS_NAME = "fx7000g_settings"
 private const val KEY_INSETS_ENABLED = "insets_enabled"
 private const val KEY_CLASSIC_THEME = "classic_theme"
+private const val KEY_LCD_CONTRAST = "lcd_contrast"
 
 @Composable
 fun CalculatorScreen(modifier: Modifier = Modifier) {
@@ -71,6 +72,13 @@ fun CalculatorScreen(modifier: Modifier = Modifier) {
         mutableStateOf(prefs.getBoolean(KEY_CLASSIC_THEME, false))
     }
     val theme: Fx7000gTheme = if (classicTheme) ClassicTheme else DarkTheme
+
+    // LCD contrast in [0, 1]. 0.5 = normal (strong pixel separation).
+    // Persisted so the user's preferred contrast survives app restarts.
+    // Adjusted by swiping left/right directly on the LCD display.
+    var lcdContrast by remember {
+        mutableStateOf(prefs.getFloat(KEY_LCD_CONTRAST, 0.5f))
+    }
 
     CompositionLocalProvider(LocalFx7000gTheme provides theme) {
         Box(
@@ -137,7 +145,12 @@ fun CalculatorScreen(modifier: Modifier = Modifier) {
                     indicator = state.indicator,
                     traceCol = state.traceCol,
                     traceRow = state.traceRow,
-                    traceText = state.traceText
+                    traceText = state.traceText,
+                    contrast = lcdContrast,
+                    onContrastChange = { newContrast ->
+                        lcdContrast = newContrast
+                        prefs.edit().putFloat(KEY_LCD_CONTRAST, newContrast).apply()
+                    }
                 )
 
                 Spacer(Modifier.height(16.dp))
