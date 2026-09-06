@@ -26,6 +26,8 @@ release/
 # Keystore / signing (keep secrets out of VCS)
 *.jks
 *.keystore
+keystore.properties
+gradle/keystore.properties
 
 # Log / temp files
 *.log

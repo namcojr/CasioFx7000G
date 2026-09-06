@@ -66,9 +66,9 @@ private data class KeyRow(
 )
 
 /** Height weight for the dense, half-height function/mode rows. */
-private const val FUNC_ROW = 0.5f
+private const val FUNC_ROW = 0.55f
 /** Height weight for the taller, more rectangular number/operator rows. */
-private const val NUM_ROW = 0.85f
+private const val NUM_ROW = 0.79f
 
 private fun keypad(): List<KeyRow> = listOf(
     KeyRow(
@@ -163,7 +163,7 @@ private fun keypad(): List<KeyRow> = listOf(
         )
     ),
     KeyRow(
-        heightWeight = 0.72f,
+        heightWeight = 0.68f,
         keys = listOf(
             KeySpec("\u25C4", CalcAction.MoveLeft, Fx7000gColors.KeyFunction),
             KeySpec("\u25BA", CalcAction.MoveRight, Fx7000gColors.KeyFunction),
@@ -266,7 +266,7 @@ private fun KeyButton(
                             Text(
                                 text = key.shiftLabel,
                                 color = visual.shiftLegend,
-                                fontSize = if (compact) 7.sp else 9.sp,
+                                fontSize = 10.sp,
                                 fontFamily = FontFamily.SansSerif,
                                 textAlign = TextAlign.Center
                             )
@@ -275,7 +275,7 @@ private fun KeyButton(
                         Text(
                             text = key.label,
                             color = visual.text,
-                            fontSize = if (compact) 11.sp else 16.sp,
+                            fontSize = if (compact) 12.sp else 16.sp,
                             fontWeight = FontWeight.SemiBold,
                             fontFamily = FontFamily.SansSerif,
                             textAlign = TextAlign.Center
@@ -285,7 +285,7 @@ private fun KeyButton(
                             Text(
                                 text = key.alphaLabel,
                                 color = visual.alphaLegend,
-                                fontSize = if (compact) 7.sp else 9.sp,
+                                fontSize = 9.sp,
                                 fontFamily = FontFamily.SansSerif,
                                 textAlign = TextAlign.Center
                             )
@@ -307,7 +307,7 @@ private fun KeyButton(
                                 ),
                             text = key.shiftLabel,
                             color = visual.shiftLegend,
-                            fontSize = if (compact) 7.sp else 9.sp,
+                            fontSize = 10.sp,
                             fontFamily = FontFamily.SansSerif,
                             textAlign = TextAlign.Center
                         )
@@ -322,7 +322,7 @@ private fun KeyButton(
                         text = key.label,
                         color = visual.text,
                         fontSize = when {
-                            compact -> 11.sp
+                            compact -> 12.sp
                             largeMainKey -> 20.sp
                             else -> 16.sp
                         },
@@ -344,7 +344,7 @@ private fun KeyButton(
                                 ),
                             text = key.alphaLabel,
                             color = visual.alphaLegend,
-                            fontSize = if (compact) 7.sp else 9.sp,
+                            fontSize = 9.sp,
                             fontFamily = FontFamily.SansSerif,
                             textAlign = TextAlign.Center
                         )

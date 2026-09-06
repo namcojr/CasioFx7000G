@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -25,9 +28,24 @@ android {
         }
     }
 
+    signingConfigs {
+        val keystoreProperties = Properties()
+        rootProject.file("gradle/keystore.properties").takeIf { it.exists() }?.let { file ->
+            file.inputStream().use { input -> keystoreProperties.load(input) }
+        }
+        create("release") {
+            storeFile = file(keystoreProperties["android.releaseSigningStoreFile"]?.toString() ?: System.getProperty("user.home") + "/.keystores/home-release.jks")
+            storePassword = keystoreProperties["release.keystore.password"]?.toString()
+            keyAlias = keystoreProperties["release.key.alias"]?.toString()
+            keyPassword = keystoreProperties["release.key.password"]?.toString()
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            isDebuggable = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
