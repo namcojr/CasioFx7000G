@@ -27,6 +27,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +49,7 @@ private const val PREFS_NAME = "fx7000g_settings"
 private const val KEY_INSETS_ENABLED = "insets_enabled"
 private const val KEY_CLASSIC_THEME = "classic_theme"
 private const val KEY_LCD_CONTRAST = "lcd_contrast"
+private const val KEY_KEY_VIBRATION = "key_vibration"
 
 @Composable
 fun CalculatorScreen(modifier: Modifier = Modifier) {
@@ -78,6 +81,12 @@ fun CalculatorScreen(modifier: Modifier = Modifier) {
     // Adjusted by swiping left/right directly on the LCD display.
     var lcdContrast by remember {
         mutableStateOf(prefs.getFloat(KEY_LCD_CONTRAST, 0.5f))
+    }
+
+    var keyVibration by remember {
+        mutableStateOf(
+            prefs.getBoolean(KEY_KEY_VIBRATION, true)
+        )
     }
 
     CompositionLocalProvider(LocalFx7000gTheme provides theme) {
@@ -113,16 +122,25 @@ fun CalculatorScreen(modifier: Modifier = Modifier) {
                     .padding(14.dp)
             ) {
                 BrandingHeader(
+                    insetsEnabled = insetsEnabled,
                     onToggleGraphics = {
                         insetsEnabled = !insetsEnabled
                         prefs.edit()
                             .putBoolean(KEY_INSETS_ENABLED, insetsEnabled)
                             .apply()
                     },
+                    classicTheme = classicTheme,
                     onToggleTheme = {
                         classicTheme = !classicTheme
                         prefs.edit()
                             .putBoolean(KEY_CLASSIC_THEME, classicTheme)
+                            .apply()
+                    },
+                    keyVibration = keyVibration,
+                    onToggleKeyVibration = {
+                        keyVibration = !keyVibration
+                        prefs.edit()
+                            .putBoolean(KEY_KEY_VIBRATION, keyVibration)
                             .apply()
                     }
                 )
@@ -157,6 +175,7 @@ fun CalculatorScreen(modifier: Modifier = Modifier) {
 
                 Keypad(
                     state = state,
+                    keyVibration = keyVibration,
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
@@ -169,50 +188,122 @@ fun CalculatorScreen(modifier: Modifier = Modifier) {
 @Composable
 private fun BrandingHeader(
     onToggleGraphics: () -> Unit = {},
-    onToggleTheme: () -> Unit = {}
+    onToggleTheme: () -> Unit = {},
+    onToggleKeyVibration: () -> Unit = {},
+    keyVibration: Boolean,
+    classicTheme: Boolean,
+    insetsEnabled: Boolean,
 ) {
     val theme = LocalFx7000gTheme.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .pointerInput(Unit) {
-                detectTapGestures(onLongPress = { onToggleTheme() })
-            },
-        verticalAlignment = Alignment.CenterVertically
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Text(
-            text = "CASIO",
-            color = theme.branding,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Black,
-            fontFamily = FontFamily.SansSerif
-        )
-        Spacer(Modifier.width(10.dp))
-        Text(
-            text = "fx-7000G",
-            color = theme.branding,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
-            fontFamily = FontFamily.SansSerif
-        )
-        Spacer(Modifier.weight(1f))
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(3.dp))
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onToggleGraphics
-                )
-                .background(theme.modelPlate)
-                .padding(horizontal = 8.dp, vertical = 2.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "GRAPHICS",
-                color = Fx7000gColors.Branding,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.SansSerif
+            // Only the CASIO / fx-7000G branding is clickable.
+            Box(
+                modifier = Modifier.clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) {
+                    menuExpanded = true
+                }
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "CASIO",
+                        color = theme.branding,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Black,
+                        fontFamily = FontFamily.SansSerif
+                    )
+
+                    Spacer(Modifier.width(10.dp))
+
+                    Text(
+                        text = "fx-7000G",
+                        color = theme.branding,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium,
+                        fontFamily = FontFamily.SansSerif
+                    )
+                }
+            }
+
+            Spacer(Modifier.weight(1f))
+
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(theme.modelPlate)
+                    .padding(horizontal = 8.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = "GRAPHICS",
+                    color = Fx7000gColors.Branding,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.SansSerif
+                )
+            }
+        }
+
+        DropdownMenu(
+            expanded = menuExpanded,
+            onDismissRequest = { menuExpanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { 
+                    Text(
+                        if (classicTheme) {
+                            "Dark theme OFF"
+                        } else {
+                            "Dark theme ON"
+                        }
+                    )
+                },
+                onClick = {
+                    onToggleTheme()
+                    menuExpanded = false
+                }
+            )
+
+            DropdownMenuItem(
+                text = { 
+                    Text(
+                        if (insetsEnabled) {
+                            "Full height OFF"
+                        } else {
+                            "Full height ON"
+                        }
+                    )
+                },
+                onClick = {
+                    onToggleGraphics()
+                    menuExpanded = false
+                }
+            )
+
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        if (keyVibration) {
+                            "Key haptics ON"
+                        } else {
+                            "Key haptics OFF"
+                        }
+                    )
+                },
+                onClick = {
+                    onToggleKeyVibration()
+                    menuExpanded = false
+                }
             )
         }
     }

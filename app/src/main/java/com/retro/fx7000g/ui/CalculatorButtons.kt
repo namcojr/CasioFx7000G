@@ -173,7 +173,11 @@ private fun keypad(): List<KeyRow> = listOf(
 )
 
 @Composable
-fun Keypad(state: CalculatorState, modifier: Modifier = Modifier) {
+fun Keypad(
+        state: CalculatorState, 
+        keyVibration: Boolean = true, 
+        modifier: Modifier = Modifier
+    ) {
     Column(
         modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(5.dp)
@@ -193,6 +197,7 @@ fun Keypad(state: CalculatorState, modifier: Modifier = Modifier) {
                         hypActive = state.hyp,
                         compact = row.compact,
                         onClick = { state.onAction(resolveAction(key, state)) },
+                        keyVibration = keyVibration,
                         modifier = Modifier
                             .weight(key.weight)
                             .fillMaxHeight()
@@ -210,6 +215,7 @@ private fun KeyButton(
     alphaActive: Boolean,
     hypActive: Boolean,
     compact: Boolean,
+    keyVibration: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -230,7 +236,9 @@ private fun KeyButton(
 
     Box(
         modifier = modifier.clickable {
-            view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            if (keyVibration) {
+                view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            }
             onClick()
         }
     ) {

@@ -37,7 +37,6 @@ sealed interface CalcAction {
  * Compose state holder (survives rotation via the activity's configChanges).
  */
 class CalculatorState {
-
     var entry by mutableStateOf("")
         private set
     var result by mutableStateOf("")
