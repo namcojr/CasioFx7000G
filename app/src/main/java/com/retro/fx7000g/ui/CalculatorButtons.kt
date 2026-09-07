@@ -39,6 +39,8 @@ private const val DEG = "\u00B0"        // degrees
 private const val MIN = "\u2032"        // arc-minutes
 private const val SEC = "\u2033"        // arc-seconds
 
+private const val H_INV = "h\u207B\u00B9" // e.g. sinh⁻¹
+
 /** Specification for a single physical key. */
 private data class KeySpec(
     val label: String,
@@ -65,10 +67,10 @@ private data class KeyRow(
     val compact: Boolean = false
 )
 
-/** Height weight for the dense, half-height function/mode rows. */
+/** Height weight for the keypad rows. */
 private const val FUNC_ROW = 0.55f
-/** Height weight for the taller, more rectangular number/operator rows. */
 private const val NUM_ROW = 0.79f
+private const val ACTION_ROW = 0.68f
 
 private fun keypad(): List<KeyRow> = listOf(
     KeyRow(
@@ -163,7 +165,7 @@ private fun keypad(): List<KeyRow> = listOf(
         )
     ),
     KeyRow(
-        heightWeight = 0.68f,
+        heightWeight = ACTION_ROW,
         keys = listOf(
             KeySpec("\u25C4", CalcAction.MoveLeft, Fx7000gColors.KeyFunction),
             KeySpec("\u25BA", CalcAction.MoveRight, Fx7000gColors.KeyFunction),
@@ -308,7 +310,7 @@ private fun KeyButton(
                                 .align(Alignment.TopCenter)
                                 .then(
                                     if (largeMainKey) {
-                                        Modifier.offset(y = 4.dp)
+                                        Modifier.offset(y = 4.dp) // Larger offset for the shift label when the main key is large
                                     } else {
                                         Modifier
                                     }
@@ -345,7 +347,7 @@ private fun KeyButton(
                                 .align(Alignment.BottomCenter)
                                 .then(
                                     if (largeMainKey) {
-                                        Modifier.offset(y = (-4).dp)
+                                        Modifier.offset(y = (-4).dp) // Smaller offset for the alpha label when the main key is large
                                     } else {
                                         Modifier
                                     }
@@ -373,6 +375,3 @@ private fun resolveAction(key: KeySpec, state: CalculatorState): CalcAction = wh
     state.shift && key.shifted != null -> key.shifted!!
     else -> key.primary
 }
-
-private const val H_INV = "h\u207B\u00B9" // e.g. sinh⁻¹
-
