@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -285,7 +284,7 @@ private fun KeyButton(
                         Text(
                             text = key.label,
                             color = visual.text,
-                            fontSize = if (compact) 12.sp else 16.sp,
+                            fontSize = if (compact) 12.sp else 18.sp,
                             fontWeight = FontWeight.SemiBold,
                             fontFamily = FontFamily.SansSerif,
                             textAlign = TextAlign.Center
@@ -295,7 +294,7 @@ private fun KeyButton(
                             Text(
                                 text = key.alphaLabel,
                                 color = visual.alphaLegend,
-                                fontSize = 9.sp,
+                                fontSize = 10.sp,
                                 fontFamily = FontFamily.SansSerif,
                                 textAlign = TextAlign.Center
                             )
@@ -334,7 +333,7 @@ private fun KeyButton(
                         fontSize = when {
                             compact -> 12.sp
                             largeMainKey -> 20.sp
-                            else -> 16.sp
+                            else -> 18.sp
                         },
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = FontFamily.SansSerif,
@@ -354,7 +353,7 @@ private fun KeyButton(
                                 ),
                             text = key.alphaLabel,
                             color = visual.alphaLegend,
-                            fontSize = 9.sp,
+                            fontSize = 10.sp,
                             fontFamily = FontFamily.SansSerif,
                             textAlign = TextAlign.Center
                         )

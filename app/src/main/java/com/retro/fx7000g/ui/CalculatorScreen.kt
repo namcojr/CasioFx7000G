@@ -2,9 +2,7 @@ package com.retro.fx7000g.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import android.content.Context
+import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -33,7 +32,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -42,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Text
+import androidx.compose.ui.text.font.FontStyle
 import com.retro.fx7000g.R
 import com.retro.fx7000g.calc.CalculatorState
 
@@ -226,12 +225,24 @@ private fun BrandingHeader(
 
                     Spacer(Modifier.width(10.dp))
 
+                    // Text(
+                    //     text = "SCIENTIFIC CALCULATOR",
+                    //     color = theme.branding,
+                    //     fontSize = 13.sp,
+                    //     fontWeight = FontWeight.Medium,
+                    //     fontFamily = FontFamily.SansSerif,
+                    //     modifier = Modifier.offset(y = 2.dp)
+                    // )
+
+                    // Spacer(Modifier.width(36.dp))
+
                     Text(
                         text = "fx-7000G",
                         color = theme.branding,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Medium,
-                        fontFamily = FontFamily.SansSerif
+                        fontFamily = FontFamily.SansSerif,
+                        fontStyle = FontStyle.Italic,
                     )
                 }
             }
