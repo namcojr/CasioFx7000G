@@ -224,17 +224,17 @@ private fun BrandingHeader(
                     )
 
                     Spacer(Modifier.width(10.dp))
+//
+//                    Text(
+//                        text = "SCIENTIFIC CALCULATOR",
+//                        color = theme.branding,
+//                        fontSize = 11.sp,
+//                        fontWeight = FontWeight.Medium,
+//                        fontFamily = FontFamily.SansSerif,
+//                        modifier = Modifier.offset(y = 3.dp)
+//                    )
 
-                    // Text(
-                    //     text = "SCIENTIFIC CALCULATOR",
-                    //     color = theme.branding,
-                    //     fontSize = 13.sp,
-                    //     fontWeight = FontWeight.Medium,
-                    //     fontFamily = FontFamily.SansSerif,
-                    //     modifier = Modifier.offset(y = 2.dp)
-                    // )
-
-                    // Spacer(Modifier.width(36.dp))
+//                    Spacer(Modifier.width(28.dp))
 
                     Text(
                         text = "fx-7000G",

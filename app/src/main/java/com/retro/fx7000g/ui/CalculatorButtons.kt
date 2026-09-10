@@ -175,9 +175,9 @@ private fun keypad(): List<KeyRow> = listOf(
 
 @Composable
 fun Keypad(
-        state: CalculatorState, 
+        modifier: Modifier = Modifier,
+        state: CalculatorState,
         keyVibration: Boolean = true, 
-        modifier: Modifier = Modifier
     ) {
     Column(
         modifier = modifier.fillMaxSize(),
@@ -193,9 +193,6 @@ fun Keypad(
                 for (key in row.keys) {
                     KeyButton(
                         key = key,
-                        shiftActive = state.shift,
-                        alphaActive = state.alpha,
-                        hypActive = state.hyp,
                         compact = row.compact,
                         onClick = { state.onAction(resolveAction(key, state)) },
                         keyVibration = keyVibration,
@@ -212,9 +209,6 @@ fun Keypad(
 @Composable
 private fun KeyButton(
     key: KeySpec,
-    shiftActive: Boolean,
-    alphaActive: Boolean,
-    hypActive: Boolean,
     compact: Boolean,
     keyVibration: Boolean,
     onClick: () -> Unit,
