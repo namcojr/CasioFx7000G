@@ -88,11 +88,11 @@ private fun keypad(isProg: Boolean = false): List<KeyRow> = listOf(
     KeyRow(
         compact = true, heightWeight = FUNC_ROW,
         keys = listOf(
-            if (isProg) KeySpec("PRINT", ins("PRINT "), Fx7000gColors.KeyFunction).withAlpha("A")
+            if (isProg) KeySpec("PRINT", ins(" PRINT "), Fx7000gColors.KeyFunction).withAlpha("A")
             else KeySpec("sin", ins("sin("), Fx7000gColors.KeyFunction, "sin$INV", ins("sin$INV("), hyp = true).withAlpha("A"),
-            if (isProg) KeySpec("INPUT", ins("INPUT "), Fx7000gColors.KeyFunction).withAlpha("B")
+            if (isProg) KeySpec("INPUT", ins(" INPUT "), Fx7000gColors.KeyFunction).withAlpha("B")
             else KeySpec("cos", ins("cos("), Fx7000gColors.KeyFunction, "cos$INV", ins("cos$INV("), hyp = true).withAlpha("B"),
-            if (isProg) KeySpec("GOTO", ins("GOTO "), Fx7000gColors.KeyFunction).withAlpha("C")
+            if (isProg) KeySpec("GOTO", ins(" GOTO "), Fx7000gColors.KeyFunction).withAlpha("C")
             else KeySpec("tan", ins("tan("), Fx7000gColors.KeyFunction, "tan$INV", ins("tan$INV("), hyp = true).withAlpha("C"),
             KeySpec("(", ins("("), Fx7000gColors.KeyFunction).withAlpha("D"),
             KeySpec(")", ins(")"), Fx7000gColors.KeyFunction, ",", ins(",")).withAlpha("E")
@@ -101,28 +101,28 @@ private fun keypad(isProg: Boolean = false): List<KeyRow> = listOf(
     KeyRow(
         compact = true, heightWeight = FUNC_ROW,
         keys = listOf(
-            if (isProg) KeySpec("IF", ins("IF "), Fx7000gColors.KeyFunction).withAlpha("F")
+            if (isProg) KeySpec("IF", ins(" IF "), Fx7000gColors.KeyFunction).withAlpha("F")
             else KeySpec("log", ins("log("), Fx7000gColors.KeyFunction, "10\u02E3", ins("10^(")).withAlpha("F"),
-            if (isProg) KeySpec("THEN", ins("THEN "), Fx7000gColors.KeyFunction).withAlpha("G")
+            if (isProg) KeySpec("THEN", ins(" THEN "), Fx7000gColors.KeyFunction).withAlpha("G")
             else KeySpec("ln", ins("ln("), Fx7000gColors.KeyFunction, "e\u02E3", ins("e^(")).withAlpha("G"),
-            if (isProg) KeySpec("FOR", ins("FOR "), Fx7000gColors.KeyFunction).withAlpha("H")
+            if (isProg) KeySpec("FOR", ins(" FOR "), Fx7000gColors.KeyFunction).withAlpha("H")
             else KeySpec("x\u00B2", ins("\u00B2"), Fx7000gColors.KeyFunction, ROOT, ins(ROOT)).withAlpha("H"),
-            if (isProg) KeySpec("TO", ins("TO "), Fx7000gColors.KeyFunction).withAlpha("I")
+            if (isProg) KeySpec("TO", ins(" TO "), Fx7000gColors.KeyFunction).withAlpha("I")
             else KeySpec("x\u02B8", ins("^"), Fx7000gColors.KeyFunction, "x$INV", ins(INV)).withAlpha("I"),
-            if (isProg) KeySpec("NEXT", ins("NEXT "), Fx7000gColors.KeyFunction).withAlpha("J")
+            if (isProg) KeySpec("NEXT", ins(" NEXT "), Fx7000gColors.KeyFunction).withAlpha("J")
             else KeySpec("\u221A", ins("\u221A("), Fx7000gColors.KeyFunction, CBRT, ins("$CBRT(")).withAlpha("J")
         )
     ),
     KeyRow(
         compact = true, heightWeight = FUNC_ROW,
         keys = listOf(
-            if (isProg) KeySpec("GOSUB", ins("GOSUB "), Fx7000gColors.KeyFunction).withAlpha("K")
+            if (isProg) KeySpec("GOSUB", ins(" GOSUB "), Fx7000gColors.KeyFunction).withAlpha("K")
             else KeySpec("x!", ins("!"), Fx7000gColors.KeyFunction).withAlpha("K"),
-            if (isProg) KeySpec("RETURN", ins("RETURN "), Fx7000gColors.KeyFunction).withAlpha("L")
+            if (isProg) KeySpec("RETURN", ins(" RETURN"), Fx7000gColors.KeyFunction).withAlpha("L")
             else KeySpec("Abs", ins("Abs("), Fx7000gColors.KeyFunction, SEC, ins(SEC)).withAlpha("L"),
-            if (isProg) KeySpec("END", ins("END "), Fx7000gColors.KeyFunction).withAlpha("M")
+            if (isProg) KeySpec("END", ins(" END"), Fx7000gColors.KeyFunction).withAlpha("M")
             else KeySpec("Int", ins("Int("), Fx7000gColors.KeyFunction, DEG, ins(DEG)).withAlpha("M"),
-            if (isProg) KeySpec("STOP", ins("STOP "), Fx7000gColors.KeyFunction).withAlpha("N")
+            if (isProg) KeySpec("STOP", ins(" STOP"), Fx7000gColors.KeyFunction).withAlpha("N")
             else KeySpec("Frac", ins("Frac("), Fx7000gColors.KeyFunction, MIN, ins(MIN)).withAlpha("N"),
             if (isProg) KeySpec(":", ins(":"), Fx7000gColors.KeyFunction).withAlpha("O")
             else KeySpec("ENG", CalcAction.Eng, Fx7000gColors.KeyFunction, "\u2192", ins("\u2192")).withAlpha("O")
