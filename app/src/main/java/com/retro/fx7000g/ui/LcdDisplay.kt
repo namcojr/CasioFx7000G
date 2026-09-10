@@ -20,6 +20,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import com.retro.fx7000g.basic.ProgState
+import com.retro.fx7000g.basic.ProgSubmode
 
 /** Logical dot-matrix resolution of the FX-7000G LCD. */
 private const val COLS = 96
@@ -50,6 +52,7 @@ fun LcdDisplay(
     traceCol: Int = -1,
     traceRow: Int = -1,
     traceText: String = "",
+    progState: ProgState? = null,
     contrast: Float = 0.5f,
     onContrastChange: (Float) -> Unit = {},
     modifier: Modifier = Modifier
@@ -57,9 +60,13 @@ fun LcdDisplay(
     val buffer = remember(
         entry, result, modeLabel, memorySet, cursor, showCursor,
         graph, rangeLines, rangeCursorRow, rangeCursorCol, modeLines,
-        presetLines, indicator, traceCol, traceRow, traceText
+        presetLines, indicator, traceCol, traceRow, traceText, progState,
+        progState?.submode, progState?.selectedSlot, progState?.editBuffer,
+        progState?.editCursor, progState?.scrollLineIdx, progState?.runLines?.size,
+        progState?.runHalted
     ) {
         when {
+            progState != null -> buildProgBuffer(progState)
             presetLines != null -> buildMenuBuffer("GRAPH", presetLines)
             modeLines != null -> buildMenuBuffer("MODE", modeLines)
             rangeLines != null -> buildRangeBuffer(rangeLines, rangeCursorRow, rangeCursorCol)
@@ -229,6 +236,81 @@ private fun overlayTrace(
         val top = 7 * CELL_H
         for (y in top until ROWS) for (x in 0 until COLS) buf[y * COLS + x] = false
         drawText(buf, traceText, col = 0, charRow = 7)
+    }
+    return buf
+}
+
+// --- PROG mode framebuffer construction --------------------------------------
+
+private fun buildProgBuffer(prog: ProgState): BooleanArray = when (prog.submode) {
+    ProgSubmode.SELECT -> buildProgSelectBuffer(prog)
+    ProgSubmode.EDIT -> buildProgEditBuffer(prog)
+    ProgSubmode.RUN -> buildProgRunBuffer(prog)
+}
+
+/**
+ * Transient P0-P9 selector UI:
+ * Line 0: PRG
+ * Line 2: PROGRAM SELECT
+ * Line 4: P0123456789 (occupied slots replaced with *)
+ * Line 6: SELECT 0-9
+ */
+private fun buildProgSelectBuffer(prog: ProgState): BooleanArray {
+    val buf = BooleanArray(COLS * ROWS)
+    drawText(buf, "PROGRAM SELECT", col = 1, charRow = 2)
+    drawText(buf, prog.store.occupiedMask(), col = 2, charRow = 4)
+    return buf
+}
+
+/**
+ * Full-screen (8-row) program line editor:
+ * Rows 0..6: existing program lines
+ * Row 7: entry prompt and cursor
+ */
+private fun buildProgEditBuffer(prog: ProgState): BooleanArray {
+    val buf = BooleanArray(COLS * ROWS)
+    val lines = prog.store.getLines(prog.selectedSlot)
+    val startIdx = prog.scrollLineIdx.coerceIn(0, maxOf(0, lines.size - 1))
+    var r = 0
+    while (r < 7 && (startIdx + r) < lines.size) {
+        val (num, stmt) = lines[startIdx + r]
+        val text = "$num $stmt"
+        drawText(buf, text, col = 0, charRow = r)
+        r++
+    }
+
+    // Row 7: edit buffer entry line
+    val prompt = ">" + prog.editBuffer
+    val maxChars = 16
+    val cur = prog.editCursor + 1 // +1 for '>'
+    val start = if (prompt.length <= maxChars) 0
+    else (cur - maxChars + 1).coerceIn(0, prompt.length - maxChars + 1)
+    val end = minOf(prompt.length, start + maxChars)
+    val window = prompt.substring(start, end)
+    drawText(buf, window, col = 0, charRow = 7)
+
+    val localCur = cur - start
+    if (localCur in 0..15) {
+        drawCursor(buf, localCur, 7)
+    }
+    return buf
+}
+
+/**
+ * Full-screen (8-row) execution console:
+ * Rows 0..7: output lines
+ */
+private fun buildProgRunBuffer(prog: ProgState): BooleanArray {
+    val buf = BooleanArray(COLS * ROWS)
+    val total = prog.runLines.size
+    val start = maxOf(0, total - 8)
+    for (i in 0 until minOf(8, total)) {
+        val line = prog.runLines[start + i]
+        drawText(buf, line, col = 0, charRow = i)
+    }
+    if (prog.runHalted) {
+        val msg = if (prog.breakLine != null) "BREAK AT ${prog.breakLine}" else "END"
+        drawText(buf, msg, col = 0, charRow = 7)
     }
     return buf
 }

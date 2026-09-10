@@ -163,6 +163,7 @@ fun CalculatorScreen(modifier: Modifier = Modifier) {
                     traceCol = state.traceCol,
                     traceRow = state.traceRow,
                     traceText = state.traceText,
+                    progState = state.progState,
                     contrast = lcdContrast,
                     onContrastChange = { newContrast ->
                         lcdContrast = newContrast

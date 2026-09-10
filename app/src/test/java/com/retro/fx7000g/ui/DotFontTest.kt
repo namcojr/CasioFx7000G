@@ -69,4 +69,16 @@ class DotFontTest {
             assertTrue("glyph for '$c' should be lit", DotFont.glyph(c).any { it.contains('#') })
         }
     }
+
+    @Test
+    fun basicSymbolsAreMapped() {
+        for (c in listOf('*', '"', '<', '>', ':', ';', '$')) {
+            val glyph = DotFont.glyph(c)
+            assertEquals("row count for '$c'", DotFont.HEIGHT, glyph.size)
+            assertTrue("glyph for '$c' should be lit", glyph.any { it.contains('#') })
+            for (row in glyph) {
+                assertEquals("col count for '$c'", DotFont.WIDTH, row.length)
+            }
+        }
+    }
 }

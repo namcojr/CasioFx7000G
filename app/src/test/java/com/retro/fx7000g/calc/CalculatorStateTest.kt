@@ -1,5 +1,6 @@
 package com.retro.fx7000g.calc
 
+import com.retro.fx7000g.basic.ProgSubmode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -607,6 +608,119 @@ class CalculatorStateTest {
         val s = state()
         s.onAction(CalcAction.Range)
         assertFalse(s.showCursor)
+    }
+    // endregion
+
+    // region PROG mode
+    @Test
+    fun modeMenuIncludesProgOption() {
+        val s = state()
+        s.onAction(CalcAction.OpenModeMenu)
+        assertNotNull(s.modeLines)
+        assertTrue(s.modeLines!!.any { it.contains("7Prg") })
+    }
+
+    @Test
+    fun enterProgModeOpensSelectSubmode() {
+        val s = state()
+        s.onAction(CalcAction.OpenModeMenu)
+        s.onAction(ins("7")) // select 7Prg
+        assertNotNull(s.progState)
+        assertEquals(ProgSubmode.SELECT, s.progState!!.submode)
+        assertFalse(s.showCursor) // selection UI has no cursor
+    }
+
+    @Test
+    fun selectSlotTransitionsToEditMode() {
+        val s = state()
+        s.onAction(CalcAction.OpenModeMenu)
+        s.onAction(ins("7"))
+        s.onAction(ins("2")) // select slot 2
+        assertEquals(2, s.progState!!.selectedSlot)
+        assertEquals(ProgSubmode.EDIT, s.progState!!.submode)
+    }
+
+    @Test
+    fun editModeInsertsAndCommitsLine() {
+        val s = state()
+        s.onAction(CalcAction.OpenModeMenu)
+        s.onAction(ins("7"))
+        s.onAction(ins("0")) // slot 0
+        s.onAction(ins("10 PRINT \"HI\""))
+        s.onAction(CalcAction.Evaluate) // commit line
+
+        val lines = s.progState!!.store.getLines(0)
+        assertEquals(1, lines.size)
+        assertEquals(10 to "PRINT \"HI\"", lines[0])
+        assertEquals("", s.progState!!.editBuffer)
+    }
+
+    @Test
+    fun exitingProgPreservesCalculatorState() {
+        val s = state()
+        s.onAction(ins("42"))
+        s.onAction(CalcAction.Evaluate)
+        assertEquals("42", s.result)
+
+        // Enter PROG mode and edit slot 1
+        s.onAction(CalcAction.OpenModeMenu)
+        s.onAction(ins("7"))
+        s.onAction(ins("1"))
+        s.onAction(ins("10 REM TEST"))
+        s.onAction(CalcAction.Evaluate)
+
+        // Press MODE to exit PROG
+        s.onAction(CalcAction.OpenModeMenu)
+        assertNull(s.progState)
+
+        // Calculator result and entry are preserved
+        assertEquals("42", s.result)
+
+        // Re-enter PROG mode: slot 1 is occupied
+        s.onAction(CalcAction.OpenModeMenu)
+        s.onAction(ins("7"))
+        assertNotNull(s.progState)
+        assertEquals("P0*23456789", s.progState!!.store.occupiedMask())
+    }
+
+    @Test
+    fun progModeAlphaLockToggle() {
+        val s = state()
+        s.onAction(CalcAction.OpenModeMenu)
+        s.onAction(ins("7"))
+        s.onAction(ins("0")) // EDIT mode
+        assertFalse(s.alpha)
+        assertFalse(s.progState!!.alphaLock)
+
+        // First press of ALPHA: alpha = true, alphaLock = false
+        s.onAction(CalcAction.ToggleAlpha)
+        assertTrue(s.alpha)
+        assertFalse(s.progState!!.alphaLock)
+
+        // Second press of ALPHA: activates alphaLock
+        s.onAction(CalcAction.ToggleAlpha)
+        assertTrue(s.progState!!.alphaLock)
+
+        // Typing a character does not reset alpha when alphaLock is active
+        s.onAction(ins("A"))
+        assertEquals("A", s.indicator) // indicator retains 'A'
+    }
+
+    @Test
+    fun clearInEditModeWithEmptyBufferReturnsToSelect() {
+        val s = state()
+        s.onAction(CalcAction.OpenModeMenu)
+        s.onAction(ins("7"))
+        s.onAction(ins("3"))
+        assertEquals(ProgSubmode.EDIT, s.progState!!.submode)
+
+        // AC when buffer is empty returns to SELECT
+        s.onAction(CalcAction.Clear)
+        assertEquals(ProgSubmode.SELECT, s.progState!!.submode)
+
+        // AC in SELECT exits PROG mode entirely
+        s.onAction(CalcAction.Clear)
+        assertNull(s.progState)
     }
     // endregion
 }

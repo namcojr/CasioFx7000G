@@ -3,6 +3,8 @@ package com.retro.fx7000g.calc
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.retro.fx7000g.basic.ProgState
+import com.retro.fx7000g.basic.ProgSubmode
 import kotlin.math.PI
 import kotlin.math.ceil
 import kotlin.math.roundToInt
@@ -69,6 +71,9 @@ class CalculatorState {
         private set
     var presetMenu by mutableStateOf(false)
         private set
+    val progStore = com.retro.fx7000g.basic.ProgramStore()
+    var progState by mutableStateOf<ProgState?>(null)
+        private set
 
     private var ans: Double = 0.0
     /** Named value memories (A–Z, plus M and the graph variable X). */
@@ -99,7 +104,7 @@ class CalculatorState {
     private val baseMode: Boolean get() = numberBase != 10
 
     /** The cursor underline is only drawn while the entry line is being edited. */
-    val showCursor: Boolean get() = !justEvaluated && !error && graphBuffer == null && !rangeMode && !modeMenu && !presetMenu
+    val showCursor: Boolean get() = !justEvaluated && !error && graphBuffer == null && !rangeMode && !modeMenu && !presetMenu && progState == null
 
     /** Text lines for the RANGE editor, or null when it is not open. */
     val rangeLines: List<String>?
@@ -117,6 +122,7 @@ class CalculatorState {
         get() = if (!modeMenu) null else listOf(
             "1Deg 2Rad 3Gra",
             "4Fix 5Sci 6Norm",
+            "7Prg",
             when (modePrompt) {
                 1 -> "Fix decimals?"
                 2 -> "Sci digits?"
@@ -142,11 +148,16 @@ class CalculatorState {
     val indicator: String
         get() = buildString {
             if (shift) append('S')
-            if (alpha) append('A')
+            if (alpha || progState?.alphaLock == true) append('A')
             if (hyp) append('h')
         }
 
     fun onAction(action: CalcAction) {
+        if (progState != null) {
+            handleProgAction(action)
+            resetModifiers(action)
+            return
+        }
         if (rangeMode) {
             handleRangeAction(action)
             resetModifiers(action)
@@ -202,7 +213,9 @@ class CalculatorState {
             action == CalcAction.ToggleHyp
         ) return
         shift = false
-        alpha = false
+        if (progState?.alphaLock != true) {
+            alpha = false
+        }
         hyp = false
     }
 
@@ -752,6 +765,89 @@ class CalculatorState {
             '4' -> modePrompt = 1 // Fix -> await decimal count
             '5' -> modePrompt = 2 // Sci -> await significant digits
             '6' -> { displayFormat = NumberFormatter.DisplayFormat.Norm; closeModeMenu() }
+            '7' -> {
+                closeModeMenu()
+                if (progState == null) progState = ProgState(progStore)
+                else progState?.submode = ProgSubmode.SELECT
+            }
+        }
+    }
+
+    private fun handleProgAction(action: CalcAction) {
+        val prog = progState ?: return
+        when (action) {
+            CalcAction.OpenModeMenu -> {
+                // Pressing MODE inside PROG mode returns to the normal calculator
+                progState = null
+                return
+            }
+            CalcAction.ToggleShift -> {
+                shift = !shift
+                if (shift) { alpha = false; hyp = false }
+                return
+            }
+            CalcAction.ToggleAlpha -> {
+                if (prog.submode == ProgSubmode.EDIT) {
+                    if (alpha) {
+                        prog.alphaLock = !prog.alphaLock
+                        if (!prog.alphaLock) alpha = false
+                    } else {
+                        alpha = true
+                        shift = false
+                        hyp = false
+                    }
+                } else {
+                    alpha = !alpha
+                    if (alpha) { shift = false; hyp = false }
+                }
+                return
+            }
+            else -> {}
+        }
+
+        when (prog.submode) {
+            ProgSubmode.SELECT -> {
+                when (action) {
+                    is CalcAction.Insert -> {
+                        if (action.text.length == 1 && action.text[0] in '0'..'9') {
+                            prog.selectSlot(action.text[0] - '0')
+                        }
+                    }
+                    CalcAction.Clear -> {
+                        progState = null
+                    }
+                    else -> {}
+                }
+            }
+            ProgSubmode.EDIT -> {
+                when (action) {
+                    is CalcAction.Insert -> prog.insertText(action.text)
+                    CalcAction.Delete -> prog.deleteChar()
+                    CalcAction.Evaluate -> prog.commitLine()
+                    CalcAction.MoveLeft -> {
+                        if (shift) prog.scrollUp() else prog.moveCursorLeft()
+                    }
+                    CalcAction.MoveRight -> {
+                        if (shift) prog.scrollDown() else prog.moveCursorRight()
+                    }
+                    CalcAction.Clear -> {
+                        val handled = prog.clearOrReturnToSelect()
+                        if (!handled) progState = null
+                    }
+                    CalcAction.Graph -> {
+                        prog.submode = ProgSubmode.RUN
+                    }
+                    else -> {}
+                }
+            }
+            ProgSubmode.RUN -> {
+                when (action) {
+                    CalcAction.Clear, CalcAction.Graph -> {
+                        prog.submode = ProgSubmode.EDIT
+                    }
+                    else -> {}
+                }
+            }
         }
     }
 

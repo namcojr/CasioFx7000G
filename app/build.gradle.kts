@@ -30,14 +30,26 @@ android {
 
     signingConfigs {
         val keystoreProperties = Properties()
-        rootProject.file("gradle/keystore.properties").takeIf { it.exists() }?.let { file ->
+        val keystorePropertiesFile = rootProject.file("gradle/keystore.properties").takeIf { it.exists() }
+            ?: rootProject.file("keystore.properties").takeIf { it.exists() }
+        keystorePropertiesFile?.let { file ->
             file.inputStream().use { input -> keystoreProperties.load(input) }
         }
         create("release") {
-            storeFile = file(keystoreProperties["android.releaseSigningStoreFile"]?.toString() ?: System.getProperty("user.home") + "/.keystores/home-release.jks")
-            storePassword = keystoreProperties["release.keystore.password"]?.toString()
-            keyAlias = keystoreProperties["release.key.alias"]?.toString()
-            keyPassword = keystoreProperties["release.key.password"]?.toString()
+            val home = System.getProperty("user.home")
+            val defaultStore = file("$home/.keystores/calc-u-later.keystore").takeIf { it.exists() }
+                ?: file("$home/.keystores/calc-u-later.jks")
+            val resolvedStorePath = (keystoreProperties["android.releaseSigningStoreFile"]
+                ?: keystoreProperties["storeFile"])?.toString()
+                ?.replace(Regex("^~(?=/|$)"), home)
+
+            storeFile = resolvedStorePath?.let { file(it) } ?: defaultStore
+            storePassword = (keystoreProperties["release.keystore.password"]
+                ?: keystoreProperties["storePassword"])?.toString() ?: "sayijiwan"
+            keyAlias = (keystoreProperties["release.key.alias"]
+                ?: keystoreProperties["keyAlias"])?.toString() ?: "homebrew"
+            keyPassword = (keystoreProperties["release.key.password"]
+                ?: keystoreProperties["keyPassword"])?.toString() ?: "sayijiwan"
         }
     }
 
