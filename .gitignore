@@ -16,6 +16,7 @@ local.properties
 *.ap_
 *.dex
 *.class
+*.salive
 
 # Generated files
 bin/
