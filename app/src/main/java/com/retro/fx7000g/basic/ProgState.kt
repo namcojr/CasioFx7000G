@@ -3,6 +3,7 @@ package com.retro.fx7000g.basic
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.retro.fx7000g.calc.DisplayTokens
 
 enum class ProgSubmode {
     SELECT, // Transient P0-P9 selector UI
@@ -49,14 +50,16 @@ class ProgState(
         editCursor += text.length
     }
 
-    /** Deletes the character immediately before the cursor in EDIT mode. */
+    /** Deletes the token immediately before the cursor in EDIT mode. */
     fun deleteChar() {
         if (submode != ProgSubmode.EDIT) return
         if (editCursor <= 0 || editBuffer.isEmpty()) return
-        val before = editBuffer.substring(0, editCursor - 1)
+        val beforeCursor = editBuffer.substring(0, editCursor)
+        val len = DisplayTokens.trailingTokenLength(beforeCursor)
+        val before = beforeCursor.dropLast(len)
         val after = editBuffer.substring(editCursor)
         editBuffer = before + after
-        editCursor--
+        editCursor -= len
     }
 
     /** Commits the current edit buffer (line entry) into the selected program slot. */

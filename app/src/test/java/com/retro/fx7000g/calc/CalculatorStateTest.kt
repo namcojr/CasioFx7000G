@@ -146,6 +146,24 @@ class CalculatorStateTest {
     }
 
     @Test
+    fun toggleSignChangesTheCurrentEntry() {
+        val s = state()
+        s.onAction(ins("12"))
+        s.onAction(CalcAction.ToggleSign)
+        assertEquals("-12", s.entry)
+        s.onAction(CalcAction.ToggleSign)
+        assertEquals("12", s.entry)
+    }
+
+    @Test
+    fun dmssFormatsCurrentValue() {
+        val s = state()
+        s.onAction(ins("1.5"))
+        s.onAction(CalcAction.Dmss)
+        assertEquals("1\u00B030\u20320\u2033", s.result)
+    }
+
+    @Test
     fun typingAfterErrorClearsIt() {
         val s = state()
         s.onAction(ins("1$DIVIDE" + "0"))
@@ -184,6 +202,28 @@ class CalculatorStateTest {
         s.onAction(CalcAction.Delete)
         assertEquals("", s.entry)
         assertEquals(0, s.cursor)
+    }
+
+    @Test
+    fun deleteRemovesMissingTokensAtOnce() {
+        val s = state()
+        s.onAction(ins("HEX$("))
+        s.onAction(CalcAction.Delete)
+        assertEquals("", s.entry)
+        assertEquals(0, s.cursor)
+    }
+
+    @Test
+    fun progDeleteRemovesTokenAtOnce() {
+        val s = state()
+        s.onAction(CalcAction.OpenModeMenu)
+        s.onAction(ins("7"))
+        s.onAction(ins("0"))
+        assertEquals(ProgSubmode.EDIT, s.progState?.submode)
+        s.onAction(ins("STR$("))
+        s.onAction(CalcAction.Delete)
+        assertEquals("", s.progState?.editBuffer)
+        assertEquals(0, s.progState?.editCursor)
     }
 
     @Test
@@ -247,12 +287,48 @@ class CalculatorStateTest {
     fun cycleModeRotatesThroughUnits() {
         val s = state()
         assertEquals("DEG", s.modeLabel)
-        s.onAction(CalcAction.CycleMode)
+        s.onAction(CalcAction.CycleMode())
         assertEquals("RAD", s.modeLabel)
-        s.onAction(CalcAction.CycleMode)
+        s.onAction(CalcAction.CycleMode())
         assertEquals("GRA", s.modeLabel)
-        s.onAction(CalcAction.CycleMode)
+        s.onAction(CalcAction.CycleMode())
         assertEquals("DEG", s.modeLabel)
+    }
+
+    @Test
+    fun cycleModeCanSetSpecificUnit() {
+        val s = state()
+        s.onAction(CalcAction.CycleMode(2))
+        assertEquals("GRA", s.modeLabel)
+        s.onAction(CalcAction.CycleMode(1))
+        assertEquals("RAD", s.modeLabel)
+        s.onAction(CalcAction.CycleMode(0))
+        assertEquals("DEG", s.modeLabel)
+    }
+
+    @Test
+    fun cycleModeIgnoresUnknownTarget() {
+        val s = state()
+        s.onAction(CalcAction.CycleMode(9))
+        assertEquals("DEG", s.modeLabel)
+    }
+    // endregion
+
+    // region String-like numeric display helpers
+    @Test
+    fun hexFunctionFormatsArgumentAsHex() {
+        val s = state()
+        s.onAction(ins("HEX$(255"))
+        s.onAction(CalcAction.Evaluate)
+        assertEquals("FF", s.result)
+    }
+
+    @Test
+    fun strFunctionFormatsArgumentAsDecimal() {
+        val s = state()
+        s.onAction(ins("STR$(255"))
+        s.onAction(CalcAction.Evaluate)
+        assertEquals("255", s.result)
     }
     // endregion
 

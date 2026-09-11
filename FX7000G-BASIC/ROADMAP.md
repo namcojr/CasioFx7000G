@@ -1,6 +1,6 @@
 # FX-7000G BASIC — Implementation Roadmap
 
-## Phase 0 — Specification
+## Phase 0 — Specification - THIS IS DONE!
 
 Status: PLANNING
 

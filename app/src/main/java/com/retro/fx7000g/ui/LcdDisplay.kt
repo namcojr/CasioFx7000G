@@ -145,9 +145,9 @@ private fun buildBuffer(
         drawText(buf, indicator, startCol, 0)
     }
 
-    // Entry occupies char-rows 2 and 3, left aligned, showing a 32-char window
+    // Entry occupies char-rows 2 to 4, left aligned, showing a 48-char window
     // that keeps the cursor in view.
-    val maxChars = 32
+    val maxChars = 48
     val cur = cursor.coerceIn(0, entry.length)
     val start = if (entry.length <= maxChars) 0
     else (cur - maxChars + 1).coerceIn(0, entry.length - maxChars + 1)

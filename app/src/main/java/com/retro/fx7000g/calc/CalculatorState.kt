@@ -19,18 +19,22 @@ sealed interface CalcAction {
     object ToggleShift : CalcAction   // SHIFT
     object ToggleAlpha : CalcAction   // ALPHA (letter layer)
     object ToggleHyp : CalcAction     // hyp prefix (sinh/cosh/tanh)
-    object CycleMode : CalcAction     // MODE
+    data class CycleMode(val target: Int? = null) : CalcAction // MODE; target 0=DEG, 1=RAD, 2=GRA
     object MemoryAdd : CalcAction     // M+
     object MemorySubtract : CalcAction // SHIFT+M+ (M−)
     object ClearMemory : CalcAction   // SHIFT+DEL (Mcl – clear every value memory)
     object Round : CalcAction         // SHIFT+0 (Rnd – round to display precision)
     object Eng : CalcAction           // SHIFT+(−) (engineering notation)
+    object Dmss : CalcAction          // SHIFT+) (decimal degrees to DMS display)
+    object ToggleSign : CalcAction    // +/-
     object Graph : CalcAction         // GRAPH
     object Range : CalcAction         // RANGE (graph window editor)
     object OpenModeMenu : CalcAction  // SHIFT+MODE (Norm/Fix/Sci setup)
     object OpenPresets : CalcAction   // SHIFT+Graph (built-in graph picker)
     object MoveLeft : CalcAction      // replay/cursor left
     object MoveRight : CalcAction     // replay/cursor right
+    object MoveUp : CalcAction        // replay/cursor up
+    object MoveDown : CalcAction      // replay/cursor down
     data class ConvertBase(val base: Int) : CalcAction // DEC / HEX / BIN / OCT
 }
 
@@ -189,18 +193,22 @@ class CalculatorState {
             CalcAction.ToggleShift -> { shift = !shift; if (shift) { alpha = false; hyp = false }}
             CalcAction.ToggleAlpha -> { alpha = !alpha; if (alpha) { shift = false; hyp = false }}
             CalcAction.ToggleHyp -> { hyp = !hyp; if (hyp) { shift = false; alpha = false }}
-            CalcAction.CycleMode -> cycleMode()
+            is CalcAction.CycleMode -> cycleMode(action.target)
             CalcAction.MemoryAdd -> memoryAdd()
             CalcAction.MemorySubtract -> memorySubtract()
             CalcAction.ClearMemory -> clearAllVariables()
             CalcAction.Round -> roundResult()
             CalcAction.Eng -> engResult()
+            CalcAction.Dmss -> dmssResult()
+            CalcAction.ToggleSign -> toggleSign()
             CalcAction.Graph -> plotGraph()
             CalcAction.Range -> enterRange()
             CalcAction.OpenModeMenu -> openModeMenu()
             CalcAction.OpenPresets -> openPresets()
             CalcAction.MoveLeft -> moveLeft()
             CalcAction.MoveRight -> moveRight()
+            CalcAction.MoveUp -> moveUp()
+            CalcAction.MoveDown -> moveDown()
             is CalcAction.ConvertBase -> convertBase(action.base)
         }
         resetModifiers(action)
@@ -249,7 +257,17 @@ class CalculatorState {
     private fun evaluate() {
         if (entry.isBlank()) return
         try {
-            if (baseMode) {
+            val hexArg = functionArgument(entry, "HEX$")
+            val strArg = functionArgument(entry, "STR$")
+            if (hexArg != null) {
+                val value = Evaluator.evaluate(hexArg, angleMode, ans, vars)
+                ans = value
+                result = NumberFormatter.formatBase(value.toLong(), 16)
+            } else if (strArg != null) {
+                val value = Evaluator.evaluate(strArg, angleMode, ans, vars)
+                ans = value
+                result = NumberFormatter.format(value, displayFormat)
+            } else if (baseMode) {
                 val value = Evaluator.evaluateBase(entry, numberBase, ans.toLong())
                 ans = value.toDouble()
                 result = NumberFormatter.formatBase(value, numberBase)
@@ -277,6 +295,12 @@ class CalculatorState {
         }
     }
 
+    private fun functionArgument(text: String, name: String): String? {
+        val prefix = "$name("
+        if (!text.startsWith(prefix)) return null
+        return text.substring(prefix.length).removeSuffix(")")
+    }
+
     private fun clear() {
         entry = ""
         result = ""
@@ -296,8 +320,7 @@ class CalculatorState {
         }
         if (cursor == 0) return
         val before = entry.substring(0, cursor)
-        val token = TRAILING_TOKENS.firstOrNull { before.endsWith(it) }
-        val len = token?.length ?: 1
+        val len = DisplayTokens.trailingTokenLength(before)
         entry = before.dropLast(len) + entry.substring(cursor)
         cursor -= len
     }
@@ -317,11 +340,37 @@ class CalculatorState {
         cursor = (cursor + 1).coerceAtMost(entry.length)
     }
 
-    private fun cycleMode() {
-        angleMode = when (angleMode) {
-            AngleMode.DEG -> AngleMode.RAD
-            AngleMode.RAD -> AngleMode.GRA
-            AngleMode.GRA -> AngleMode.DEG
+    private fun moveUp() {
+        if (error) return
+        if (graphBuffer != null) { stepTrace(-1); return }
+        if (justEvaluated) {
+            justEvaluated = false
+            cursor = entry.length
+        }
+        cursor = (cursor - 16).coerceAtLeast(0)
+    }
+
+    private fun moveDown() {
+        if (error) return
+        if (graphBuffer != null) { stepTrace(1); return }
+        if (justEvaluated) {
+            justEvaluated = false
+            cursor = entry.length
+        }
+        cursor = (cursor + 16).coerceAtMost(entry.length)
+    }
+
+    private fun cycleMode(target: Int? = null) {
+        angleMode = when (target) {
+            0 -> AngleMode.DEG
+            1 -> AngleMode.RAD
+            2 -> AngleMode.GRA
+            null -> when (angleMode) {
+                AngleMode.DEG -> AngleMode.RAD
+                AngleMode.RAD -> AngleMode.GRA
+                AngleMode.GRA -> AngleMode.DEG
+            }
+            else -> angleMode
         }
     }
 
@@ -655,6 +704,8 @@ class CalculatorState {
             CalcAction.Evaluate -> rangeNext()
             CalcAction.MoveLeft -> rangeMove(-1)
             CalcAction.MoveRight -> rangeMove(1)
+            CalcAction.MoveUp -> rangeMove(-1)
+            CalcAction.MoveDown -> rangeMove(1)
             CalcAction.Clear -> exitRange()
             CalcAction.Graph -> { commitRangeField(); exitRange(); plotGraph() }
             CalcAction.Range -> exitRange()
@@ -736,7 +787,7 @@ class CalculatorState {
         when (action) {
             is CalcAction.Insert -> modeMenuInput(action.text)
             CalcAction.Clear -> closeModeMenu()
-            CalcAction.CycleMode -> closeModeMenu()
+            is CalcAction.CycleMode -> closeModeMenu()
             CalcAction.OpenModeMenu -> closeModeMenu()
             CalcAction.ToggleShift -> shift = !shift
             else -> {}
@@ -900,6 +951,46 @@ class CalculatorState {
         }
     }
 
+    private fun dmssResult() {
+        if (baseMode) return
+        try {
+            val value = currentValue()
+            val sign = if (value < 0.0) "-" else ""
+            val absolute = kotlin.math.abs(value)
+            val degrees = absolute.toInt()
+            val minutesValue = (absolute - degrees) * 60.0
+            val minutes = minutesValue.toInt()
+            val seconds = (minutesValue - minutes) * 60.0
+            result = "$sign$degrees\u00B0$minutes\u2032${NumberFormatter.format(seconds)}\u2033"
+            ans = value
+            justEvaluated = true
+            error = false
+        } catch (e: Exception) {
+            result = "Ma ERROR"
+            error = true
+            justEvaluated = false
+        }
+    }
+
+    private fun toggleSign() {
+        if (baseMode) return
+        if (justEvaluated || error) {
+            entry = if (ans == 0.0) "0" else "-${NumberFormatter.format(ans)}"
+            cursor = entry.length
+            result = ""
+            justEvaluated = false
+            error = false
+            return
+        }
+        if (entry.startsWith("-")) {
+            entry = entry.substring(1)
+            cursor = (cursor - 1).coerceAtLeast(0)
+        } else {
+            entry = "-$entry"
+            cursor++
+        }
+    }
+
     private fun closeModeMenu() {
         modeMenu = false
         modePrompt = 0
@@ -930,13 +1021,5 @@ class CalculatorState {
         const val GRAPH_ROWS = 64
 
         val OPERATORS = charArrayOf('+', '-', '\u00D7', '\u00F7', '^')
-
-        // Multi-character glyph groups DEL should remove in one press.
-        val TRAILING_TOKENS = listOf(
-            "sin\u207B\u00B9(", "cos\u207B\u00B9(", "tan\u207B\u00B9(",
-            "sin(", "cos(", "tan(", "log(", "ln(",
-            "Abs(", "Int(", "Frac(", "and", "xor", "Not", "or",
-            "10^(", "e^(", "\u221A(", "Ans"
-        )
     }
 }

@@ -119,12 +119,23 @@ object Evaluator {
                 src.startsWith("Abs", i) -> { tokens += Token.Fn("abs"); i += 3 }
                 src.startsWith("Int", i) -> { tokens += Token.Fn("int"); i += 3 }
                 src.startsWith("Frac", i) -> { tokens += Token.Fn("frac"); i += 4 }
+                src.startsWith("FIX", i) -> { tokens += Token.Fn("fix"); i += 3 }
+                src.startsWith("SGN", i) -> { tokens += Token.Fn("sgn"); i += 3 }
+                src.startsWith("STR$", i) -> { tokens += Token.Fn("str"); i += 4 }
+                src.startsWith("HEX$", i) -> { tokens += Token.Fn("hex"); i += 4 }
                 src.startsWith("Pol", i) -> { tokens += Token.Fn("pol"); i += 3 }
                 src.startsWith("Rec", i) -> { tokens += Token.Fn("rec"); i += 3 }
                 src.startsWith("Ran#", i) -> { tokens += Token.Const("ran"); i += 4 }
                 src.startsWith("nPr", i) -> { tokens += Token.Perm; i += 3 }
                 src.startsWith("nCr", i) -> { tokens += Token.Comb; i += 3 }
                 src.startsWith("Ans", i) -> { tokens += Token.Const("ans"); i += 3 }
+                src.startsWith("&H", i) -> {
+                    i += 2
+                    val start = i
+                    while (i < src.length && baseDigit(src[i]).let { it in 0 until 16 }) i++
+                    if (i == start) throw CalcError("hex")
+                    tokens += Token.Num(src.substring(start, i).toLongOrNull(16)?.toDouble() ?: throw CalcError("hex"))
+                }
                 c in 'A'..'Z' -> { tokens += Token.Var(c); i++ }
                 c == '\u2192' -> { tokens += Token.Store; i++ } // → (store)
                 c == '\u03C0' -> { tokens += Token.Const("pi"); i++ } // π
@@ -334,6 +345,14 @@ object Evaluator {
             "abs" -> abs(arg)
             "int" -> truncate(arg)
             "frac" -> arg - truncate(arg)
+            "fix" -> truncate(arg)
+            "str" -> arg
+            "hex" -> arg
+            "sgn" -> when {
+                arg < 0.0 -> -1.0
+                arg > 0.0 -> 1.0
+                else -> 0.0
+            }
             "cbrt" -> Math.cbrt(arg)
             else -> throw CalcError("fn")
         }
@@ -426,6 +445,13 @@ object Evaluator {
                 c == ' ' -> i++
                 // "Ans" must be matched before the digit branch, since 'A' is a hex digit.
                 src.startsWith("Ans", i) -> { out += BToken.Num(ans); i += 3 }
+                src.startsWith("&H", i) -> {
+                    i += 2
+                    val start = i
+                    while (i < src.length && baseDigit(src[i]).let { it in 0 until 16 }) i++
+                    if (i == start) throw CalcError("hex")
+                    out += BToken.Num(src.substring(start, i).toLongOrNull(16) ?: throw CalcError("hex"))
+                }
                 digit in 0 until base -> {
                     val start = i
                     while (i < src.length && baseDigit(src[i]).let { it in 0 until base }) i++

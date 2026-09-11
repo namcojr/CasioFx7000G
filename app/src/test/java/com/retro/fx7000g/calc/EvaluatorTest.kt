@@ -178,6 +178,9 @@ class EvaluatorTest {
 
     @Test
     fun ansConstant() = assertEquals(43.0, eval("Ans+1", ans = 42.0), DELTA)
+
+    @Test
+    fun hexLiteral() = assertEquals(255.0, eval("&HFF"), DELTA)
     // endregion
 
     // region Functions Abs/Int/Frac
@@ -189,6 +192,22 @@ class EvaluatorTest {
 
     @Test
     fun fracPart() = assertEquals(0.9, eval("Frac3.9"), 1e-9)
+
+    @Test
+    fun fixTruncatesTowardZero() = assertEquals(-3.0, eval("FIX-3.9"), DELTA)
+
+    @Test
+    fun signReturnsNegativeZeroOrPositiveOne() {
+        assertEquals(-1.0, eval("SGN-4"), DELTA)
+        assertEquals(0.0, eval("SGN0"), DELTA)
+        assertEquals(1.0, eval("SGN4"), DELTA)
+    }
+
+    @Test
+    fun stringNamedNumericFunctionsEvaluateArgument() {
+        assertEquals(255.0, eval("HEX$(255"), DELTA)
+        assertEquals(12.0, eval("STR$(12"), DELTA)
+    }
     // endregion
 
     // region Variables & store
@@ -283,6 +302,9 @@ class EvaluatorTest {
 
     @Test
     fun hexNumber() = assertEquals(255L, Evaluator.evaluateBase("FF", 16))
+
+    @Test
+    fun baseHexLiteral() = assertEquals(255L, Evaluator.evaluateBase("&HFF", 10))
 
     @Test
     fun decimalAddition() = assertEquals(30L, Evaluator.evaluateBase("12+18", 10))
