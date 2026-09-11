@@ -669,7 +669,7 @@ class CalculatorState {
         val mapped = when {
             c in '0'..'9' -> c
             c == '.' -> '.'
-            c == '\u2212' || c == '-' -> '-'
+            c == '-' -> '-'
             c == 'E' || c == 'e' -> 'E'
             else -> return
         }
@@ -698,7 +698,7 @@ class CalculatorState {
     }
 
     private fun commitRangeField() {
-        val v = rangeBuffer.replace('\u2212', '-').toDoubleOrNull() ?: return
+        val v = rangeBuffer.toDoubleOrNull() ?: return
         setRangeFieldValue(rangeField, v)
     }
 
@@ -929,7 +929,7 @@ class CalculatorState {
         const val GRAPH_COLS = 96
         const val GRAPH_ROWS = 64
 
-        val OPERATORS = charArrayOf('+', '\u2212', '\u00D7', '\u00F7', '^')
+        val OPERATORS = charArrayOf('+', '-', '\u00D7', '\u00F7', '^')
 
         // Multi-character glyph groups DEL should remove in one press.
         val TRAILING_TOKENS = listOf(

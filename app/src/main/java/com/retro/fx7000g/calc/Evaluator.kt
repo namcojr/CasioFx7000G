@@ -94,11 +94,10 @@ object Evaluator {
                     // Scientific "E" exponent produced by the EXP key.
                     if (i < src.length && src[i] == 'E') {
                         i++
-                        if (i < src.length && (src[i] == '+' || src[i] == '-' || src[i] == '\u2212')) i++
+                        if (i < src.length && (src[i] == '+' || src[i] == '-')) i++
                         while (i < src.length && src[i].isDigit()) i++
                     }
                     val text = src.substring(start, i)
-                        .replace('\u2212', '-')
                         .replace('E', 'e')
                     val value = text.toDoubleOrNull() ?: throw CalcError("num")
                     tokens += Token.Num(value)
@@ -131,7 +130,7 @@ object Evaluator {
                 c == '\u03C0' -> { tokens += Token.Const("pi"); i++ } // π
                 c == 'e' -> { tokens += Token.Const("e"); i++ }
                 c == '+' -> { tokens += Token.Plus; i++ }
-                c == '-' || c == '\u2212' -> { tokens += Token.Minus; i++ }
+                c == '-' -> { tokens += Token.Minus; i++ }
                 c == '*' || c == '\u00D7' -> { tokens += Token.Times; i++ }
                 c == '/' || c == '\u00F7' -> { tokens += Token.Divide; i++ }
                 c == '(' -> { tokens += Token.LParen; i++ }
@@ -438,7 +437,7 @@ object Evaluator {
                 src.startsWith("or", i) -> { out += BToken.Or; i += 2 }
                 src.startsWith("Not", i) -> { out += BToken.Not; i += 3 }
                 c == '+' -> { out += BToken.Plus; i++ }
-                c == '-' || c == '\u2212' -> { out += BToken.Minus; i++ }
+                c == '-' -> { out += BToken.Minus; i++ }
                 c == '*' || c == '\u00D7' -> { out += BToken.Times; i++ }
                 c == '/' || c == '\u00F7' -> { out += BToken.Divide; i++ }
                 c == '(' -> { out += BToken.LParen; i++ }

@@ -15,13 +15,10 @@ import org.junit.Test
  * `mutableStateOf`-backed properties read and write through the global snapshot.
  */
 class CalculatorStateTest {
-
     private val TIMES = "\u00D7"
     private val DIVIDE = "\u00F7"
-    private val MINUS = "\u2212"
 
     private fun state() = CalculatorState()
-
     private fun ins(text: String) = CalcAction.Insert(text)
 
     /** Reads one RANGE editor line (0=XMIN..5=YSCL) without altering the window. */
@@ -444,7 +441,7 @@ class CalculatorStateTest {
     @Test
     fun cubeRootOfNegative() {
         val s = state()
-        s.onAction(ins("\u00B3\u221A(\u22128"))
+        s.onAction(ins("\u00B3\u221A(-8"))
         s.onAction(CalcAction.Evaluate)
         assertEquals("-2", s.result)
     }

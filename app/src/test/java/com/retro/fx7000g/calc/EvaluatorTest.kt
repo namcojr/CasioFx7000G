@@ -18,7 +18,7 @@ class EvaluatorTest {
     // Glyphs used by the keypad / evaluator.
     private val TIMES = "\u00D7"
     private val DIVIDE = "\u00F7"
-    private val MINUS = "\u2212"
+    private val MINUS = "-"
     private val SQRT = "\u221A"
     private val PI_SIGN = "\u03C0"
     private val SQUARE = "\u00B2"

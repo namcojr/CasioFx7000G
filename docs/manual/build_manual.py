@@ -58,7 +58,7 @@ SQRT = "\u221A"
 PI = "\u03C0"
 MUL = "\u00D7"
 DIV = "\u00F7"
-MINUS = "\u2212"
+MINUS = "-"
 SUP2 = "\u00B2"
 DEG = "\u00B0"
 MIN = "\u2032"
@@ -995,11 +995,11 @@ pdf.note(
     label="Clearing all variables")
 
 pdf.start_section("5-2  Independent memory (M+ and M)", level=1)
-pdf.h2("5-2  Independent memory \u2014 M+, M\u2212 and M")
+pdf.h2("5-2  Independent memory \u2014 M+, M- and M")
 pdf.idx("independent memory", "M+", "M-", "memory", "M flag")
 pdf.body(
     "The M+ key adds the current value to the independent memory M; SHIFT M+ (the "
-    "M\u2212 legend) subtracts it instead. Recall M with ALPHA M+ (the red M legend). "
+    "M- legend) subtracts it instead. Recall M with ALPHA M+ (the red M legend). "
     "Whenever M holds a non-zero value the M flag is shown on the status line. Clear "
     "it by storing 0 into M (0 " + ARR + " M).")
 pdf.example("Example 16 \u2014 accumulating a running total", [
@@ -1007,7 +1007,7 @@ pdf.example("Example 16 \u2014 accumulating a running total", [
     ("120  M+", "120"),
     ("30  SHIFT M+", "30"),
     ("ALPHA M  EXE", "340"),
-], note="M+ adds and SHIFT M+ (M\u2212) subtracts; recall the total with ALPHA M+.")
+], note="M+ adds and SHIFT M+ (M-) subtracts; recall the total with ALPHA M+.")
 
 
 # --------------------------------------------------------------------------- #

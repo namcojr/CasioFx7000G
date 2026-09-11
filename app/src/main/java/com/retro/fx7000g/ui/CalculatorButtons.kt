@@ -96,10 +96,10 @@ private fun keypad(isProg: Boolean = false): List<KeyRow> = listOf(
             if (isProg) KeySpec("GOTO", ins("GOTO "), Fx7000gColors.KeyFunction, "DIM", ins("DIM ")).withAlpha("C")
             else KeySpec("tan", ins("tan("), Fx7000gColors.KeyFunction, "tan$INV", ins("tan$INV("), hyp = true).withAlpha("C"),
             if (isProg) KeySpec("(", ins("("), Fx7000gColors.KeyFunction, "READ", ins("READ ")).withAlpha("D")
-            // TODO: Implement FIX as per FX-880P manual
-            else KeySpec("(", ins("("), Fx7000gColors.KeyFunction, "FIX", ins("FIX ")).withAlpha("D"),
+            // TODO: Implement FIX and DMSS as per FX-880P manual
+            else KeySpec("(", ins("("), Fx7000gColors.KeyFunction, "FIX", ins("FIX")).withAlpha("D"),
             if (isProg) KeySpec(")", ins(")"), Fx7000gColors.KeyFunction, "DATA", ins("DATA ")).withAlpha("E")
-            else KeySpec(")", ins(")"), Fx7000gColors.KeyFunction, ",", ins(",")).withAlpha("E")
+            else KeySpec(")", ins(")"), Fx7000gColors.KeyFunction, "DMSS", ins("DMSS")).withAlpha("E")
         )
     ),
     KeyRow(
@@ -176,7 +176,7 @@ private fun keypad(isProg: Boolean = false): List<KeyRow> = listOf(
             else KeySpec("5", ins("5"), Fx7000gColors.KeyNumber, "Rec", ins("Rec(")).withAlpha("Y"),
             if (isProg) KeySpec("6", ins("6"), Fx7000gColors.KeyNumber, "P6", CalcAction.Graph).withAlpha("Z")
             else KeySpec("6", ins("6"), Fx7000gColors.KeyNumber, "%", ins("%")).withAlpha("Z"),
-            KeySpec("\u2212", ins("\u2212"), Fx7000gColors.KeyOperator),
+            KeySpec("-", ins("-"), Fx7000gColors.KeyOperator),
             KeySpec("+", ins("+"), Fx7000gColors.KeyOperator)
         )
     ),
@@ -184,18 +184,18 @@ private fun keypad(isProg: Boolean = false): List<KeyRow> = listOf(
         heightWeight = NUM_ROW,
         keys = listOf(
             // TODO: Implement CalcAction.Program => Switch to program (X) for programs P1-P3
+            // TODO: Implement CHR$ and STR$ => These should insert a "(" as well for convenience "STR$("
             if (isProg) KeySpec("1", ins("1"), Fx7000gColors.KeyNumber, "P1", CalcAction.Graph).withAlpha("X")
-            // TODO: Implement DMSS as per FX-880P manual
-            else KeySpec("1", ins("1"), Fx7000gColors.KeyNumber, "DMSS", ins("DMSS")).withAlpha("X"),
+            // TODO: Implement HEX$ and &H as per FX-880P manual
+            else KeySpec("1", ins("1"), Fx7000gColors.KeyNumber, "HEX$", ins("HEX$(")).withAlpha("X"),
             if (isProg) KeySpec("2", ins("2"), Fx7000gColors.KeyNumber, "P2", CalcAction.Graph).withAlpha("Y")
-            // TODO: Implement HEX$ as per FX-880P manual
-            else KeySpec("2", ins("2"), Fx7000gColors.KeyNumber, "HEX$", ins("HEX$(")).withAlpha("Y"),
+            else KeySpec("2", ins("2"), Fx7000gColors.KeyNumber, "&H", ins("&H")).withAlpha("Y"),
             if (isProg) KeySpec("3", ins("3"), Fx7000gColors.KeyNumber, "P3", CalcAction.Graph).withAlpha("Z")
             else KeySpec("3", ins("3"), Fx7000gColors.KeyNumber).withAlpha("Z"),
-            if (isProg) KeySpec("\"", ins("\""), Fx7000gColors.KeyFunction, "&H", ins("&H"))
+            if (isProg) KeySpec("\"", ins("\""), Fx7000gColors.KeyFunction, "&H", ins("&H")).withAlpha("CHR$")
             else KeySpec("\u03C0", ins("\u03C0"), Fx7000gColors.KeyFunction, "e", ins("e")),
-            // TODO: Implement NEW and NEW# (clears all programs when in PRG EDIT mode - Check FX-880P manual)
-            if (isProg) KeySpec("EXP", ins("E"), Fx7000gColors.KeyFunction, "NEW", ins("NEW"))
+            // TODO: Implement NEW and NEW # (NEW # clears all programs when in PRG EDIT mode - Check FX-880P manual)
+            if (isProg) KeySpec("EXP", ins("E"), Fx7000gColors.KeyFunction, "NEW", ins("NEW")).withAlpha("STR$")
             else KeySpec("EXP", ins("E"), Fx7000gColors.KeyFunction),
         )
     ),
@@ -209,11 +209,12 @@ private fun keypad(isProg: Boolean = false): List<KeyRow> = listOf(
             if (isProg) KeySpec(",", ins(","), Fx7000gColors.KeyNumber, "SET", ins("SET ")).withAlpha("RECT")
             else KeySpec(",", ins(","), Fx7000gColors.KeyNumber, "Ran#", ins("Ran#")),
             if (isProg) KeySpec(".", ins("."), Fx7000gColors.KeyNumber, "TAB", ins("TAB ")).withAlpha("LINE")
-            else KeySpec("(-)", ins("\u2212"), Fx7000gColors.KeyNumber),
+            // TODO: Check and fix implementation of "+/-"", right now only inserts a minus sign.
+            else KeySpec("+/-", ins("-"), Fx7000gColors.KeyNumber),
             if (isProg) KeySpec("?", ins("?"), Fx7000gColors.KeyFunction, "REM", ins("REM "))
             else KeySpec("Ans", ins("Ans"), Fx7000gColors.KeyFunction),
             if (isProg) KeySpec(";", ins(";"), Fx7000gColors.KeyFunction, "BEEP", ins("BEEP "))
-            else KeySpec("M+", CalcAction.MemoryAdd, Fx7000gColors.KeyFunction, "M\u2212", CalcAction.MemorySubtract)
+            else KeySpec("M+", CalcAction.MemoryAdd, Fx7000gColors.KeyFunction, "M-", CalcAction.MemorySubtract)
         )
     ),
     KeyRow(
@@ -272,8 +273,8 @@ private fun KeyButton(
     val view = LocalView.current
     val theme = LocalFx7000gTheme.current
     val largeMainKey = !compact && key.label in setOf(
-        "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "(-)",
-        "Ans", "EXP", "M+", "\u00D7", "\u00F7", "+", "\u2212",
+        "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "+/-",
+        "Ans", "EXP", "M+", "\u00D7", "\u00F7", "+", "-",
         "\u03C0", "\u25C4", "\u25BA", "?", ";", "\"", "*", ","
     )
 
@@ -413,57 +414,83 @@ private fun KeyButton(
     }
 }
 
-/** Chooses which action a key press produces given the active prefixes. */
 private fun resolveAction(key: KeySpec, state: CalculatorState): CalcAction {
-    val prog = state.progState
-    if (prog != null && prog.submode == ProgSubmode.EDIT) {
-        val isAlpha = state.alpha || prog.alphaLock
-        if (isAlpha && key.alphaAction != null) {
-            return key.alphaAction!!
-        }
-        if (state.shift) {
-            when (key.label) {
-                "X" -> return ins(":")
-                "\u03C0" -> return ins("\"")
-                ")" -> return ins(",")
-                else -> if (key.shifted != null) return key.shifted!!
-            }
-        } else {
-            when (key.label) {
-                "sin" -> return ins("PRINT ")
-                "cos" -> return ins("INPUT ")
-                "tan" -> return ins("GOTO ")
-                "log" -> return ins("IF ")
-                "ln" -> return ins("THEN ")
-                "x\u00B2" -> return ins("FOR ")
-                "x\u02B8" -> return ins("TO ")
-                "\u221A" -> return ins("NEXT ")
-                "x!" -> return ins("GOSUB ")
-                "Abs" -> return ins("RETURN ")
-                "Int" -> return ins("END ")
-                "Frac" -> return ins("STOP ")
-                "DEC" -> return ins("=")
-                "HEX" -> return ins("<")
-                "BIN" -> return ins(">")
-                "OCT" -> return ins(":")
-                "\u03C0" -> return ins("\"")
-                "\u00D7" -> return ins("*")
-                "\u00F7" -> return ins("/")
-                "\u2212" -> return ins("-")
-                "(-)" -> return ins("-")
-                "Ans" -> return ins("?")
-                "M+" -> return ins(";")
-                else -> {}
-            }
-        }
-    }
     return when {
-        state.alpha && key.alphaAction != null -> key.alphaAction!!
+        // ALPHA
+        state.alpha && key.alphaAction != null ->
+            key.alphaAction!!
+
+        // HYP / SHIFT+HYP
         state.hyp && key.hyp -> {
-            val base = key.label // "sin" / "cos" / "tan"
-            if (state.shift) ins("$base$H_INV(") else ins("${base}h(")
+            val base = key.label
+            if (state.shift) {
+                ins("$base$H_INV(")
+            } else {
+                ins("${base}h(")
+            }
         }
-        state.shift && key.shifted != null -> key.shifted!!
-        else -> key.primary
+
+        // SHIFT
+        state.shift && key.shifted != null ->
+            key.shifted!!
+
+        // Normal
+        else ->
+            key.primary
     }
 }
+
+/** Chooses which action a key press produces given the active prefixes. */
+// @Deprecated("Use the main resolveAction function instead")
+// private fun resolveAction(key: KeySpec, state: CalculatorState): CalcAction {
+//     val prog = state.progState
+//     if (prog != null && prog.submode == ProgSubmode.EDIT) {
+//         val isAlpha = state.alpha || prog.alphaLock
+//         if (isAlpha && key.alphaAction != null) {
+//             return key.alphaAction!!
+//         }
+//         if (state.shift) {
+//             when (key.label) {
+//                 "X" -> return ins(":")
+//                 "\u03C0" -> return ins("\"")
+//                 ")" -> return ins(",")
+//                 else -> if (key.shifted != null) return key.shifted!!
+//             }
+//         } else {
+//             when (key.label) {
+//                 "sin" -> return ins("PRINT ")
+//                 "cos" -> return ins("INPUT ")
+//                 "tan" -> return ins("GOTO ")
+//                 "log" -> return ins("IF ")
+//                 "ln" -> return ins("THEN ")
+//                 "x\u00B2" -> return ins("FOR ")
+//                 "x\u02B8" -> return ins("TO ")
+//                 "\u221A" -> return ins("NEXT ")
+//                 "x!" -> return ins("GOSUB ")
+//                 "Abs" -> return ins("RETURN ")
+//                 "Int" -> return ins("END ")
+//                 "Frac" -> return ins("STOP ")
+//                 "DEC" -> return ins("=")
+//                 "HEX" -> return ins("<")
+//                 "BIN" -> return ins(">")
+//                 "OCT" -> return ins(":")
+//                 "\u03C0" -> return ins("\"")
+//                 "\u00D7" -> return ins("*")
+//                 "\u00F7" -> return ins("/")
+//                 "+/-" -> return ins("-")
+//                 "Ans" -> return ins("?")
+//                 "M+" -> return ins(";")
+//                 else -> {}
+//             }
+//         }
+//     }
+//     return when {
+//         state.alpha && key.alphaAction != null -> key.alphaAction!!
+//         state.hyp && key.hyp -> {
+//             val base = key.label // "sin" / "cos" / "tan"
+//             if (state.shift) ins("$base$H_INV(") else ins("${base}h(")
+//         }
+//         state.shift && key.shifted != null -> key.shifted!!
+//         else -> key.primary
+//     }
+// }

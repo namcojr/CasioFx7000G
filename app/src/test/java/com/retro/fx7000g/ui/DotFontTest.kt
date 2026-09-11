@@ -58,11 +58,6 @@ class DotFontTest {
     }
 
     @Test
-    fun asciiMinusAndUnicodeMinusRenderIdentically() {
-        assertArrayEquals(DotFont.glyph('-'), DotFont.glyph('\u2212'))
-    }
-
-    @Test
     fun specialSymbolsAreMapped() {
         // ×, ÷, √, π, ² should not fall back to blank.
         for (c in listOf('\u00D7', '\u00F7', '\u221A', '\u03C0', '\u00B2')) {
