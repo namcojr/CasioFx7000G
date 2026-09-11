@@ -31,8 +31,6 @@ sealed interface CalcAction {
     object OpenPresets : CalcAction   // SHIFT+Graph (built-in graph picker)
     object MoveLeft : CalcAction      // replay/cursor left
     object MoveRight : CalcAction     // replay/cursor right
-    // To be reviewed: Investigate if we can pass program selection through CalcAction
-    // object Program7 : CalcAction      // SHIFT+7 (Select Program 7)
     data class ConvertBase(val base: Int) : CalcAction // DEC / HEX / BIN / OCT
 }
 

@@ -73,13 +73,6 @@ private const val FUNC_ROW = 0.55f
 private const val NUM_ROW = 0.79f
 private const val ACTION_ROW = 0.68f
 
-// TAB
-// SET
-// ON GOTO
-// ON GOSUB
-// ON ERROR GOTO
-// RESUME
-
 private fun keypad(isProg: Boolean = false): List<KeyRow> = listOf(
     KeyRow(
         compact = true, heightWeight = FUNC_ROW,
@@ -103,7 +96,8 @@ private fun keypad(isProg: Boolean = false): List<KeyRow> = listOf(
             if (isProg) KeySpec("GOTO", ins("GOTO "), Fx7000gColors.KeyFunction, "DIM", ins("DIM ")).withAlpha("C")
             else KeySpec("tan", ins("tan("), Fx7000gColors.KeyFunction, "tan$INV", ins("tan$INV("), hyp = true).withAlpha("C"),
             if (isProg) KeySpec("(", ins("("), Fx7000gColors.KeyFunction, "READ", ins("READ ")).withAlpha("D")
-            else KeySpec("(", ins("("), Fx7000gColors.KeyFunction).withAlpha("D"),
+            // TODO: Implement FIX as per FX-880P manual
+            else KeySpec("(", ins("("), Fx7000gColors.KeyFunction, "FIX", ins("FIX ")).withAlpha("D"),
             if (isProg) KeySpec(")", ins(")"), Fx7000gColors.KeyFunction, "DATA", ins("DATA ")).withAlpha("E")
             else KeySpec(")", ins(")"), Fx7000gColors.KeyFunction, ",", ins(",")).withAlpha("E")
         )
@@ -127,14 +121,15 @@ private fun keypad(isProg: Boolean = false): List<KeyRow> = listOf(
         compact = true, heightWeight = FUNC_ROW,
         keys = listOf(
             if (isProg) KeySpec("GOSUB", ins("GOSUB "), Fx7000gColors.KeyFunction, "LIST", ins("LIST ")).withAlpha("K")
-            else KeySpec("x!", ins("!"), Fx7000gColors.KeyFunction).withAlpha("K"),
+            // TODO: Implement SGN as per FX-880P manual
+            else KeySpec("x!", ins("!"), Fx7000gColors.KeyFunction, "SGN", ins("SGN(")).withAlpha("K"),
             if (isProg) KeySpec("RETURN", ins("RETURN"), Fx7000gColors.KeyFunction, "EDIT", ins("EDIT ")).withAlpha("L")
             else KeySpec("Abs", ins("Abs("), Fx7000gColors.KeyFunction, SEC, ins(SEC)).withAlpha("L"),
             if (isProg) KeySpec("END", ins("END"), Fx7000gColors.KeyFunction, "POKE", ins("POKE ")).withAlpha("M")
             else KeySpec("Int", ins("Int("), Fx7000gColors.KeyFunction, DEG, ins(DEG)).withAlpha("M"),
             if (isProg) KeySpec("STOP", ins("STOP"), Fx7000gColors.KeyFunction, "PEEK", ins("PEEK ")).withAlpha("N")
             else KeySpec("Frac", ins("Frac("), Fx7000gColors.KeyFunction, MIN, ins(MIN)).withAlpha("N"),
-            if (isProg) KeySpec(":", ins(":"), Fx7000gColors.KeyFunction, "DEFSEG", ins("DEFSEG ")).withAlpha("O")
+            if (isProg) KeySpec(":", ins(":"), Fx7000gColors.KeyFunction, "INKEY$", ins("INKEY$(")).withAlpha("O")
             else KeySpec("ENG", CalcAction.Eng, Fx7000gColors.KeyFunction, "\u2192", ins("\u2192")).withAlpha("O")
         )
     ),
@@ -163,7 +158,8 @@ private fun keypad(isProg: Boolean = false): List<KeyRow> = listOf(
             if (isProg) KeySpec("8", ins("8"), Fx7000gColors.KeyNumber, "P8", CalcAction.Graph).withAlpha("V")
             else KeySpec("8", ins("8"), Fx7000gColors.KeyNumber, "nCr", ins("nCr")).withAlpha("V"),
             if (isProg) KeySpec("9", ins("9"), Fx7000gColors.KeyNumber, "P9", CalcAction.Graph).withAlpha("W")
-            else KeySpec("9", ins("9"), Fx7000gColors.KeyNumber).withAlpha("W"),
+            // TODO: Implement ANGLE (CalcAction?)
+            else KeySpec("9", ins("9"), Fx7000gColors.KeyNumber, "ANGLE", ins("ANGLE")).withAlpha("W"),
             if (isProg) KeySpec("/", ins("/"), Fx7000gColors.KeyOperator)
             else KeySpec("\u00F7", ins("\u00F7"), Fx7000gColors.KeyOperator),
             if (isProg) KeySpec("*", ins("*"), Fx7000gColors.KeyOperator)
@@ -189,24 +185,30 @@ private fun keypad(isProg: Boolean = false): List<KeyRow> = listOf(
         keys = listOf(
             // TODO: Implement CalcAction.Program => Switch to program (X) for programs P1-P3
             if (isProg) KeySpec("1", ins("1"), Fx7000gColors.KeyNumber, "P1", CalcAction.Graph).withAlpha("X")
-            else KeySpec("1", ins("1"), Fx7000gColors.KeyNumber).withAlpha("X"),
+            // TODO: Implement DMSS as per FX-880P manual
+            else KeySpec("1", ins("1"), Fx7000gColors.KeyNumber, "DMSS", ins("DMSS")).withAlpha("X"),
             if (isProg) KeySpec("2", ins("2"), Fx7000gColors.KeyNumber, "P2", CalcAction.Graph).withAlpha("Y")
-            else KeySpec("2", ins("2"), Fx7000gColors.KeyNumber).withAlpha("Y"),
+            // TODO: Implement HEX$ as per FX-880P manual
+            else KeySpec("2", ins("2"), Fx7000gColors.KeyNumber, "HEX$", ins("HEX$(")).withAlpha("Y"),
             if (isProg) KeySpec("3", ins("3"), Fx7000gColors.KeyNumber, "P3", CalcAction.Graph).withAlpha("Z")
             else KeySpec("3", ins("3"), Fx7000gColors.KeyNumber).withAlpha("Z"),
             if (isProg) KeySpec("\"", ins("\""), Fx7000gColors.KeyFunction, "&H", ins("&H"))
             else KeySpec("\u03C0", ins("\u03C0"), Fx7000gColors.KeyFunction, "e", ins("e")),
-            KeySpec("EXP", ins("E"), Fx7000gColors.KeyFunction)
+            // TODO: Implement NEW and NEW# (clears all programs when in PRG EDIT mode - Check FX-880P manual)
+            if (isProg) KeySpec("EXP", ins("E"), Fx7000gColors.KeyFunction, "NEW", ins("NEW"))
+            else KeySpec("EXP", ins("E"), Fx7000gColors.KeyFunction),
         )
     ),
     KeyRow(
         heightWeight = NUM_ROW,
         keys = listOf(
              // TODO: Implement CalcAction.Program => Switch to program (X) for program P0
-            if (isProg) KeySpec("0", ins("0"), Fx7000gColors.KeyNumber, "P0", CalcAction.Graph)
+             // TODO: Implement CIRCLE, RECT and LINE => These should insert a "(" as well for convenience "CIRCLE("
+            if (isProg) KeySpec("0", ins("0"), Fx7000gColors.KeyNumber, "P0", CalcAction.Graph).withAlpha("CIRCLE")
             else KeySpec("0", ins("0"), Fx7000gColors.KeyNumber, "Rnd", CalcAction.Round),
-            KeySpec(",", ins(","), Fx7000gColors.KeyNumber, if (isProg) null else "Ran#", if (isProg) null else ins("Ran#")),
-            if (isProg) KeySpec(".", ins("."), Fx7000gColors.KeyNumber)
+            if (isProg) KeySpec(",", ins(","), Fx7000gColors.KeyNumber, "SET", ins("SET ")).withAlpha("RECT")
+            else KeySpec(",", ins(","), Fx7000gColors.KeyNumber, "Ran#", ins("Ran#")),
+            if (isProg) KeySpec(".", ins("."), Fx7000gColors.KeyNumber, "TAB", ins("TAB ")).withAlpha("LINE")
             else KeySpec("(-)", ins("\u2212"), Fx7000gColors.KeyNumber),
             if (isProg) KeySpec("?", ins("?"), Fx7000gColors.KeyFunction, "REM", ins("REM "))
             else KeySpec("Ans", ins("Ans"), Fx7000gColors.KeyFunction),
