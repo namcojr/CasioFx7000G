@@ -225,7 +225,8 @@ private fun BrandingHeader(
                     )
 
                     Spacer(Modifier.width(10.dp))
-//
+
+                    // Attempted additional branding - Does not fit all phone screens
 //                    Text(
 //                        text = "SCIENTIFIC CALCULATOR",
 //                        color = theme.branding,

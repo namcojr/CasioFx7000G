@@ -257,8 +257,9 @@ private fun buildProgBuffer(prog: ProgState): BooleanArray = when (prog.submode)
  */
 private fun buildProgSelectBuffer(prog: ProgState): BooleanArray {
     val buf = BooleanArray(COLS * ROWS)
-    drawText(buf, "PROGRAM SELECT", col = 1, charRow = 2)
-    drawText(buf, prog.store.occupiedMask(), col = 2, charRow = 4)
+    drawText(buf, "PRG", col = 0, charRow = 0)
+    drawText(buf, prog.store.occupiedMask(), col = 4, charRow = 0)
+    drawText(buf, "32768K Free", col = 0, charRow = 2)
     return buf
 }
 
