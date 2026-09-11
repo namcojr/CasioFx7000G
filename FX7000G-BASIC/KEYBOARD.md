@@ -90,18 +90,18 @@ Less frequent commands can use SHIFT combinations.
 
 Candidates:
 
-    DIM
-    READ
-    DATA
+    DIM (done)
+    READ (done)
+    DATA (done)
     RESTORE
-    STEP
-    LET
+    STEP (done)
+    LET (done)
     RUN
-    CLS
-    LOCATE
-    PLOT
+    CLS (done)
+    LOCATE (done)
+    PLOT (done)
     LINE
-    DRAW
+    DRAW (done)
 
 This list is provisional.
 
@@ -182,7 +182,7 @@ The keyboard may expose:
 
     RUN
     STOP/BREAK
-    CONT
+    CONT (done)
     RESET
     program selection
 
