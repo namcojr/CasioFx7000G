@@ -91,6 +91,64 @@ class CalculatorStateTest {
         s.onAction(CalcAction.MoveRight)
         assertEquals(1, s.cursor)
     }
+
+    @Test
+    fun moveHomeJumpsToStartOfEntry() {
+        val s = state()
+        s.onAction(ins("12345"))
+        s.onAction(CalcAction.MoveHome)
+        assertEquals(0, s.cursor)
+    }
+
+    @Test
+    fun moveEndJumpsToEndOfEntry() {
+        val s = state()
+        s.onAction(ins("12345"))
+        s.onAction(CalcAction.MoveHome)
+        assertEquals(0, s.cursor)
+        s.onAction(CalcAction.MoveEnd)
+        assertEquals(5, s.cursor)
+    }
+
+    @Test
+    fun moveHomeAfterEvaluateReopensEntryForEditing() {
+        val s = state()
+        s.onAction(ins("1+2"))
+        s.onAction(CalcAction.Evaluate)
+        assertFalse(s.showCursor) // result is on screen, not the entry cursor
+
+        // HOME makes the last entry editable again with the cursor at position 0.
+        s.onAction(CalcAction.MoveHome)
+        assertEquals(0, s.cursor)
+        assertTrue(s.showCursor)
+
+        // Inserting there prepends to the recalled expression.
+        s.onAction(ins("9"))
+        assertEquals("91+2", s.entry)
+    }
+
+    @Test
+    fun moveEndAfterEvaluateReopensEntryForAppending() {
+        val s = state()
+        s.onAction(ins("1+2"))
+        s.onAction(CalcAction.Evaluate)
+
+        s.onAction(CalcAction.MoveEnd)
+        assertEquals(3, s.cursor)
+        assertTrue(s.showCursor)
+
+        s.onAction(ins("+4"))
+        assertEquals("1+2+4", s.entry)
+    }
+
+    @Test
+    fun moveHomeAndEndClampOnEmptyEntry() {
+        val s = state()
+        s.onAction(CalcAction.MoveHome)
+        assertEquals(0, s.cursor)
+        s.onAction(CalcAction.MoveEnd)
+        assertEquals(0, s.cursor)
+    }
     // endregion
 
     // region Evaluation
@@ -950,6 +1008,28 @@ class CalculatorStateTest {
         // AC in SELECT exits PROG mode entirely
         s.onAction(CalcAction.Clear)
         assertNull(s.progState)
+    }
+
+    @Test
+    fun homeAndEndNavigateProgramEditor() {
+        val s = state()
+        s.onAction(CalcAction.OpenModeMenu)
+        s.onAction(ins("7"))
+        s.onAction(ins("0")) // slot 0 -> EDIT mode
+        s.onAction(ins("10 PRINT \"HI\""))
+
+        // HOME jumps the edit cursor to the start of the line.
+        s.onAction(CalcAction.MoveHome)
+        assertEquals(0, s.progState!!.editCursor)
+
+        // END jumps it to the end of the line.
+        s.onAction(CalcAction.MoveEnd)
+        assertEquals("10 PRINT \"HI\"".length, s.progState!!.editCursor)
+
+        // Inserting at HOME prepends to the current line.
+        s.onAction(CalcAction.MoveHome)
+        s.onAction(ins("5"))
+        assertEquals("510 PRINT \"HI\"", s.progState!!.editBuffer)
     }
     // endregion
 }

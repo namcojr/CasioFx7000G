@@ -220,9 +220,8 @@ private fun keypad(isProg: Boolean = false): List<KeyRow> = listOf(
         keys = listOf(
             KeySpec("\u25C4", CalcAction.MoveLeft, Fx7000gColors.KeyFunction),
             KeySpec("\u25BA", CalcAction.MoveRight, Fx7000gColors.KeyFunction),
-            // TODO: Implement HOME and END keys CalcAction methods for navigation
-            KeySpec("\u25B2", CalcAction.MoveUp, Fx7000gColors.KeyFunction, "HOME", CalcAction.MoveUp),
-            KeySpec("\u25BC", CalcAction.MoveDown, Fx7000gColors.KeyFunction, "END", CalcAction.MoveDown),
+            KeySpec("\u25B2", CalcAction.MoveUp, Fx7000gColors.KeyFunction, "HOME", CalcAction.MoveHome),
+            KeySpec("\u25BC", CalcAction.MoveDown, Fx7000gColors.KeyFunction, "END", CalcAction.MoveEnd),
             KeySpec("EXE", CalcAction.Evaluate, Fx7000gColors.KeyExe, weight = 3f)
         )
     )

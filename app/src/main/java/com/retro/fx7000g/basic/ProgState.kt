@@ -94,6 +94,20 @@ class ProgState(
         }
     }
 
+    /** HOME: jumps the EDIT cursor to the start of the current line. */
+    fun moveCursorHome() {
+        if (submode == ProgSubmode.EDIT) {
+            editCursor = 0
+        }
+    }
+
+    /** END: jumps the EDIT cursor to the end of the current line. */
+    fun moveCursorEnd() {
+        if (submode == ProgSubmode.EDIT) {
+            editCursor = editBuffer.length
+        }
+    }
+
     fun scrollUp() {
         if (submode == ProgSubmode.EDIT) {
             scrollLineIdx = (scrollLineIdx - 1).coerceAtLeast(0)

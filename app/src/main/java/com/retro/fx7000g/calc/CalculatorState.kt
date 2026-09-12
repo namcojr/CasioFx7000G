@@ -38,6 +38,8 @@ sealed interface CalcAction {
     object MoveRight : CalcAction     // replay/cursor right
     object MoveUp : CalcAction        // replay/cursor up
     object MoveDown : CalcAction      // replay/cursor down
+    object MoveHome : CalcAction      // replay/cursor to line start (SHIFT+up arrow)
+    object MoveEnd : CalcAction       // replay/cursor to line end (SHIFT+down arrow)
     data class ConvertBase(val base: Int) : CalcAction // DEC / HEX / BIN / OCT
 }
 
@@ -234,6 +236,8 @@ class CalculatorState {
             CalcAction.MoveRight -> moveRight()
             CalcAction.MoveUp -> moveUp()
             CalcAction.MoveDown -> moveDown()
+            CalcAction.MoveHome -> moveHome()
+            CalcAction.MoveEnd -> moveEnd()
             is CalcAction.ConvertBase -> convertBase(action.base)
         }
         resetModifiers(action)
@@ -476,6 +480,30 @@ class CalculatorState {
             cursor = entry.length
         }
         cursor = (cursor + 16).coerceAtMost(entry.length)
+    }
+
+    /**
+     * HOME (SHIFT + up arrow): jumps the entry cursor to the start of the line.
+     * Like the other arrows, pressing it after EXE re-opens the last entry for
+     * editing, so the cursor becomes visible again at position zero.
+     */
+    private fun moveHome() {
+        if (error) return
+        if (graphBuffer != null) { stepTrace(-1); return }
+        if (justEvaluated) justEvaluated = false
+        cursor = 0
+    }
+
+    /**
+     * END (SHIFT + down arrow): jumps the entry cursor to the end of the line.
+     * Pressing it after EXE re-opens the last entry with the cursor visible at
+     * its trailing edge, ready to append.
+     */
+    private fun moveEnd() {
+        if (error) return
+        if (graphBuffer != null) { stepTrace(1); return }
+        if (justEvaluated) justEvaluated = false
+        cursor = entry.length
     }
 
     private fun cycleMode(target: Int? = null) {
@@ -1009,6 +1037,8 @@ class CalculatorState {
                     CalcAction.MoveRight -> {
                         if (shift) prog.scrollDown() else prog.moveCursorRight()
                     }
+                    CalcAction.MoveHome -> prog.moveCursorHome()
+                    CalcAction.MoveEnd -> prog.moveCursorEnd()
                     CalcAction.Clear -> {
                         val handled = prog.clearOrReturnToSelect()
                         if (!handled) progState = null
