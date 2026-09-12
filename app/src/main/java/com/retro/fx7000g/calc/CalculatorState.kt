@@ -31,7 +31,7 @@ sealed interface CalcAction {
     object ToggleSign : CalcAction    // +/-
     object Graph : CalcAction         // GRAPH
     object Range : CalcAction         // RANGE (graph window editor)
-    object OpenModeMenu : CalcAction  // SHIFT+MODE (Norm/Fix/Sci setup)
+    object OpenModeMenu : CalcAction  // MODE (Deg/Rad/Gra, Fix/Sci/Norm, Prg/Cal setup)
     object OpenPresets : CalcAction   // SHIFT+Graph (built-in graph picker)
     object MoveLeft : CalcAction      // replay/cursor left
     object MoveRight : CalcAction     // replay/cursor right
@@ -138,7 +138,7 @@ class CalculatorState {
         get() = if (!modeMenu) null else listOf(
             "1Deg 2Rad 3Gra",
             "4Fix 5Sci 6Norm",
-            "7Prg",
+            "7Prg 8Cal",
             when (modePrompt) {
                 1 -> "Fix decimals?"
                 2 -> "Sci digits?"
@@ -177,6 +177,13 @@ class CalculatorState {
         }
 
     fun onAction(action: CalcAction) {
+        // The MODE menu is an overlay that can also be opened from inside PROG
+        // mode (MODE key), so it is reduced before the PROG environment.
+        if (modeMenu) {
+            handleModeMenu(action)
+            resetModifiers(action)
+            return
+        }
         if (progState != null) {
             handleProgAction(action)
             resetModifiers(action)
@@ -184,11 +191,6 @@ class CalculatorState {
         }
         if (rangeMode) {
             handleRangeAction(action)
-            resetModifiers(action)
-            return
-        }
-        if (modeMenu) {
-            handleModeMenu(action)
             resetModifiers(action)
             return
         }
@@ -937,6 +939,12 @@ class CalculatorState {
                 if (progState == null) progState = ProgState(progStore)
                 else progState?.submode = ProgSubmode.SELECT
             }
+            '8' -> {
+                // Cal: return to the normal calculator, leaving PROG if this
+                // menu was opened from inside it.
+                closeModeMenu()
+                progState = null
+            }
         }
     }
 
@@ -944,8 +952,9 @@ class CalculatorState {
         val prog = progState ?: return
         when (action) {
             CalcAction.OpenModeMenu -> {
-                // Pressing MODE inside PROG mode returns to the normal calculator
-                progState = null
+                // MODE opens the shared mode menu as an overlay; choosing 8Cal
+                // there returns to the normal calculator, 7Prg stays in PROG.
+                openModeMenu()
                 return
             }
             CalcAction.ToggleShift -> {

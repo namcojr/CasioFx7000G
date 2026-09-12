@@ -796,6 +796,56 @@ class CalculatorStateTest {
     }
 
     @Test
+    fun modeMenuIncludesCalculatorOption() {
+        val s = state()
+        s.onAction(CalcAction.OpenModeMenu)
+        assertNotNull(s.modeLines)
+        assertTrue(s.modeLines!!.any { it.contains("8Cal") })
+    }
+
+    /** MODE inside PROG opens the shared mode menu without leaving PROG. */
+    @Test
+    fun modeInProgOpensModeMenuOverlay() {
+        val s = state()
+        s.onAction(CalcAction.OpenModeMenu)
+        s.onAction(ins("7")) // enter 7Prg
+        assertNotNull(s.progState)
+
+        s.onAction(CalcAction.OpenModeMenu)
+        assertNotNull(s.progState) // still in PROG underneath
+        assertNotNull(s.modeLines)
+    }
+
+    /** The 8Cal option in the mode menu returns to the normal calculator. */
+    @Test
+    fun calOptionReturnsToCalculatorFromProg() {
+        val s = state()
+        s.onAction(CalcAction.OpenModeMenu)
+        s.onAction(ins("7"))
+        s.onAction(ins("1")) // slot 1, EDIT
+        assertEquals(ProgSubmode.EDIT, s.progState!!.submode)
+
+        s.onAction(CalcAction.OpenModeMenu) // open menu from PROG
+        s.onAction(ins("8")) // 8Cal
+        assertNull(s.progState)
+        assertNull(s.modeLines)
+    }
+
+    /** Re-selecting 7Prg from the overlay keeps the existing PROG slot. */
+    @Test
+    fun progOptionKeepsSelectedSlot() {
+        val s = state()
+        s.onAction(CalcAction.OpenModeMenu)
+        s.onAction(ins("7"))
+        s.onAction(ins("4")) // slot 4, EDIT
+        s.onAction(CalcAction.OpenModeMenu) // open menu from PROG
+        s.onAction(ins("7")) // back to 7Prg (SELECT)
+        assertEquals(4, s.progState!!.selectedSlot)
+        assertEquals(ProgSubmode.SELECT, s.progState!!.submode)
+        assertNull(s.modeLines)
+    }
+
+    @Test
     fun enterProgModeOpensSelectSubmode() {
         val s = state()
         s.onAction(CalcAction.OpenModeMenu)
@@ -844,8 +894,12 @@ class CalculatorStateTest {
         s.onAction(ins("10 REM TEST"))
         s.onAction(CalcAction.Evaluate)
 
-        // Press MODE to exit PROG
+        // Press MODE to open the mode menu (as an overlay over PROG),
+        // then 8Cal to return to the calculator.
         s.onAction(CalcAction.OpenModeMenu)
+        assertNotNull(s.progState)
+        assertNotNull(s.modeLines)
+        s.onAction(ins("8"))
         assertNull(s.progState)
 
         // Calculator result and entry are preserved

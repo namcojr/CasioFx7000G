@@ -66,9 +66,11 @@ fun LcdDisplay(
         progState?.runHalted
     ) {
         when {
+            // The MODE menu overlays the current environment (it can be opened
+            // from inside PROG mode), so it draws on top of PROG.
+            modeLines != null -> buildMenuBuffer("MODE", modeLines)
             progState != null -> buildProgBuffer(progState)
             presetLines != null -> buildMenuBuffer("GRAPH", presetLines)
-            modeLines != null -> buildMenuBuffer("MODE", modeLines)
             rangeLines != null -> buildRangeBuffer(rangeLines, rangeCursorRow, rangeCursorCol)
             graph != null -> overlayTrace(graph, traceCol, traceRow, traceText)
             else -> buildBuffer(entry, result, modeLabel, memorySet, cursor, showCursor, indicator)

@@ -83,7 +83,9 @@ private fun keypad(isProg: Boolean = false): List<KeyRow> = listOf(
             else KeySpec("hyp", CalcAction.ToggleHyp, Fx7000gColors.KeyFunction),
             KeySpec("MODE", CalcAction.OpenModeMenu, Fx7000gColors.KeyFunction, "Range", CalcAction.Range),
             KeySpec("DEL", CalcAction.Delete, Fx7000gColors.KeyFunction, "Mcl", CalcAction.ClearMemory),
-            KeySpec("AC", CalcAction.Clear, Fx7000gColors.KeyAc)
+            // TODO: Implement CalcAction.Break => Break into a running program.
+            if (isProg) KeySpec("BRK", CalcAction.Clear, Fx7000gColors.KeyAc)
+            else KeySpec("AC", CalcAction.Clear, Fx7000gColors.KeyAc)
         )
     ),
     KeyRow(
