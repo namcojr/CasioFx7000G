@@ -431,6 +431,40 @@ class BasicTokenizerTest {
         )
     }
 
+    @Test
+    fun reservedWordIsSplitFromAFollowingDigit() {
+        // Compact input glues a reserved word to the number that follows it.
+        assertEquals(
+            listOf(
+                "LINE(10)", "KW(PRINT)", "ID(B)", "PUNCT(:)", "KW(GOTO)", "NUM(10)",
+                "EOL", "EOF"
+            ),
+            sig("10PRINT B:GOTO10")
+        )
+        assertEquals(
+            listOf("LINE(10)", "KW(THEN)", "NUM(50)", "EOL", "EOF"),
+            sig("10 THEN50")
+        )
+    }
+
+    @Test
+    fun reservedWordPrefixesDoNotBreakIdentifiers() {
+        // `COUNTER`, `TOTAL` and `FORT` merely start with reserved words; they
+        // are only split when a digit follows the reserved prefix.
+        assertEquals(
+            listOf("LINE(10)", "ID(COUNTER)", "EOL", "EOF"),
+            sig("10 COUNTER")
+        )
+        assertEquals(
+            listOf("LINE(10)", "ID(TOTAL)", "EOL", "EOF"),
+            sig("10 TOTAL")
+        )
+        assertEquals(
+            listOf("LINE(10)", "ID(FORT)", "EOL", "EOF"),
+            sig("10 FORT")
+        )
+    }
+
     // --- lexical errors -----------------------------------------------------
 
     @Test

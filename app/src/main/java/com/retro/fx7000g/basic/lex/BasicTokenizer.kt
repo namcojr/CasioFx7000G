@@ -139,17 +139,43 @@ object BasicTokenizer {
             val p = pos()
             val start = index
             val end = CommonLexerUtils.scanIdentifier(source, index)
-            while (index < end) advance()
-            val text = source.substring(start, index)
+            val text = source.substring(start, end)
 
             // `RAN#` - '#' is not an identifier character, so assemble it here.
             if (text.equals("RAN", ignoreCase = true) &&
-                index < source.length && source[index] == '#'
+                end < source.length && source[end] == '#'
             ) {
+                while (index < end) advance()
                 advance()
                 return BasicToken.Function(BasicFunction.RAN, p)
             }
 
+            // The whole identifier run is a reserved word: use it as-is.
+            reservedWord(text, p)?.let {
+                while (index < end) advance()
+                return it
+            }
+
+            // A reserved word may be written directly against a following digit,
+            // e.g. the compact `GOTO10`. Reserved words take precedence, so the
+            // leading word is split off and the digits are re-scanned as a
+            // numeric literal by the main loop. Splitting only happens before a
+            // digit, so genuine identifiers such as `COUNTER`, `TOTAL` or `FORT`
+            // still scan as a single identifier.
+            reservedPrefixBeforeDigit(text, p)?.let { (prefixLength, token) ->
+                while (index < start + prefixLength) advance()
+                return token
+            }
+
+            while (index < end) advance()
+            return BasicToken.Identifier(text, p)
+        }
+
+        /**
+         * Maps a complete identifier run to its reserved token, or returns
+         * `null` when it is an ordinary identifier.
+         */
+        private fun reservedWord(text: String, p: SourcePos): BasicToken? {
             BasicKeyword.from(text)?.let { return BasicToken.Keyword(it, p) }
             BasicFunction.from(text)?.let { return BasicToken.Function(it, p) }
             // PI is the only reserved constant. `E` (like every other letter) is
@@ -158,7 +184,23 @@ object BasicTokenizer {
             if (text.equals("PI", ignoreCase = true)) {
                 return BasicToken.Constant(BasicConstant.PI, p)
             }
-            return BasicToken.Identifier(text, p)
+            return null
+        }
+
+        /**
+         * Finds the longest reserved-word prefix of [text] that is immediately
+         * followed by a digit, together with the prefix length. Used to split
+         * compact spellings such as `GOTO10` into a keyword and a number.
+         */
+        private fun reservedPrefixBeforeDigit(
+            text: String,
+            p: SourcePos
+        ): Pair<Int, BasicToken>? {
+            for (length in text.length - 1 downTo 1) {
+                if (!CommonLexerUtils.isAsciiDigit(text[length])) continue
+                reservedWord(text.substring(0, length), p)?.let { return length to it }
+            }
+            return null
         }
 
         /** Consumes the rest of a `REM` line as a single comment token. */
