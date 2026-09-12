@@ -7,7 +7,7 @@ object DisplayTokens {
         "INKEY$(", "RIGHT$(", "LEFT$(", "MID$(", "CHR$(", "STR$(", "HEX$(",
         "sinh(", "cosh(", "tanh(", "sin(", "cos(", "tan(",
         "CONTINUE", "LOCATE ", "RESTORE ",
-        "PRINT ", "INPUT ", "GOSUB ", "RETURN", "GOTO ", "THEN ",
+        "PRINT ", "INPUT ", "GOSUB ", "RETURN", "GOTO ", " THEN ",
         "DATA ", "READ ", "DRAW ", "PLOT ", "ERASE ", "POKE ", "PEEK ",
         "CLEAR ", "CIRCLE ", "RECT ", "LINE ", "BEEP ", "REM ", "SET ", "TAB ",
         "DIM ", "IF ", " TO ", "FOR ", "LET ", "END", "STOP", "LIST ", "EDIT ",

@@ -106,7 +106,7 @@ private fun keypad(isProg: Boolean = false): List<KeyRow> = listOf(
     KeyRow(
         compact = true, heightWeight = FUNC_ROW,
         keys = listOf(
-            if (isProg) KeySpec("IF", ins("IF "), Fx7000gColors.KeyFunction, "THEN", ins("THEN ")).withAlpha("F")
+            if (isProg) KeySpec("IF", ins("IF "), Fx7000gColors.KeyFunction, "THEN", ins(" THEN ")).withAlpha("F")
             else KeySpec("log", ins("log("), Fx7000gColors.KeyFunction, "10\u02E3", ins("10^(")).withAlpha("F"),
             if (isProg) KeySpec("FOR", ins("FOR "), Fx7000gColors.KeyFunction, "TO", ins(" TO ")).withAlpha("G")
             else KeySpec("ln", ins("ln("), Fx7000gColors.KeyFunction, "e\u02E3", ins("e^(")).withAlpha("G"),
@@ -202,7 +202,7 @@ private fun keypad(isProg: Boolean = false): List<KeyRow> = listOf(
         heightWeight = NUM_ROW,
         keys = listOf(
              // TODO: Implement CalcAction.Program => Switch to program (X) for program P0
-             // TODO: Implement CIRCLE, RECT and LINE => These should insert a "(" as well for convenience "CIRCLE("
+             // TODO: Implement CIRCLE, RECT and LINE
             if (isProg) KeySpec("0", ins("0"), Fx7000gColors.KeyNumber, "P0", CalcAction.Graph).withAlpha("CIRCLE ")
             else KeySpec("0", ins("0"), Fx7000gColors.KeyNumber, "Round", CalcAction.Round),
             if (isProg) KeySpec(",", ins(","), Fx7000gColors.KeyNumber, "SET", ins("SET ")).withAlpha("RECT ")
@@ -220,8 +220,9 @@ private fun keypad(isProg: Boolean = false): List<KeyRow> = listOf(
         keys = listOf(
             KeySpec("\u25C4", CalcAction.MoveLeft, Fx7000gColors.KeyFunction),
             KeySpec("\u25BA", CalcAction.MoveRight, Fx7000gColors.KeyFunction),
-            KeySpec("\u25B2", CalcAction.MoveUp, Fx7000gColors.KeyFunction),
-            KeySpec("\u25BC", CalcAction.MoveDown, Fx7000gColors.KeyFunction),
+            // TODO: Implement HOME and END keys CalcAction methods for navigation
+            KeySpec("\u25B2", CalcAction.MoveUp, Fx7000gColors.KeyFunction, "HOME", CalcAction.MoveUp),
+            KeySpec("\u25BC", CalcAction.MoveDown, Fx7000gColors.KeyFunction, "END", CalcAction.MoveDown),
             KeySpec("EXE", CalcAction.Evaluate, Fx7000gColors.KeyExe, weight = 3f)
         )
     )
