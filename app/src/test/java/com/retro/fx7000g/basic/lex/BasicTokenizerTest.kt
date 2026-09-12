@@ -263,7 +263,7 @@ class BasicTokenizerTest {
         assertEquals(
             listOf(
                 "LINE(10)", "ID(A)", "OP(<=)", "ID(B)", "OP(>=)", "ID(C)",
-                "OP(<>)", "ID(D)", "OP(<)", "CONST(E)", "OP(>)", "ID(F)", "OP(=)",
+                "OP(<>)", "ID(D)", "OP(<)", "ID(E)", "OP(>)", "ID(F)", "OP(=)",
                 "ID(G)", "EOL", "EOF"
             ),
             sig("10 A<=B>=C<>D<E>F=G")
@@ -301,9 +301,10 @@ class BasicTokenizerTest {
 
     @Test
     fun builtInConstants() {
+        // PI is reserved (the manual: "entered into a formula using PI").
         assertEquals(
             listOf(
-                "LINE(10)", "ID(A)", "OP(=)", "CONST(PI)", "OP(*)", "CONST(E)",
+                "LINE(10)", "ID(A)", "OP(=)", "CONST(PI)", "OP(*)", "ID(E)",
                 "EOL", "EOF"
             ),
             sig("10 A=PI*E")
@@ -311,6 +312,31 @@ class BasicTokenizerTest {
         assertEquals(
             listOf("LINE(10)", "ID(A)", "OP(=)", "CONST(PI)", "EOL", "EOF"),
             sig("10 A=\u03C0")
+        )
+    }
+
+    @Test
+    fun bareEIsAVariableNotAConstant() {
+        // The FX-880P reserves PI but not E; its manual shows `20 E=15`.
+        assertEquals(
+            listOf("LINE(10)", "ID(E)", "OP(=)", "NUM(0)", "EOL", "EOF"),
+            sig("10 E=0")
+        )
+        assertEquals(
+            listOf("LINE(10)", "ID(e)", "OP(=)", "NUM(1)", "EOL", "EOF"),
+            sig("10 e=1")
+        )
+    }
+
+    @Test
+    fun scientificNotationIsStillANumber() {
+        // `E` remains part of a numeric literal when it directly follows digits.
+        val num = firstNumber("10 A=10E3")
+        assertEquals(10000.0, num.value, 0.0)
+        assertEquals("10E3", num.raw)
+        assertEquals(
+            listOf("LINE(10)", "ID(E)", "OP(=)", "NUM(10E3)", "EOL", "EOF"),
+            sig("10 E=10E3")
         )
     }
 

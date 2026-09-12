@@ -152,9 +152,11 @@ object BasicTokenizer {
 
             BasicKeyword.from(text)?.let { return BasicToken.Keyword(it, p) }
             BasicFunction.from(text)?.let { return BasicToken.Function(it, p) }
-            when (text.uppercase()) {
-                "PI" -> return BasicToken.Constant(BasicConstant.PI, p)
-                "E" -> return BasicToken.Constant(BasicConstant.E, p)
+            // PI is the only reserved constant. `E` (like every other letter) is
+            // an ordinary variable name on the FX-880P, so `E=0` is valid while
+            // `10E3` is still scanned as scientific notation by readNumber().
+            if (text.equals("PI", ignoreCase = true)) {
+                return BasicToken.Constant(BasicConstant.PI, p)
             }
             return BasicToken.Identifier(text, p)
         }

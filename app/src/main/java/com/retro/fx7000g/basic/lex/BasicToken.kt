@@ -31,10 +31,17 @@ enum class BasicPunctuation(val symbol: String) {
     QUESTION("?")
 }
 
-/** Built-in constants, reusing the calculator's `PI` / `E` vocabulary. */
+/**
+ * Built-in constants.
+ *
+ * The FX-880P reserved-word list contains `PI` (which can be entered directly
+ * as `3.141592654`) but no bare `E`: on the real machine `E` is an ordinary
+ * variable name -- the manual's own examples include `20 E=15` and `160 E=A*B`.
+ * Euler's number is reached through the exponential/logarithm functions rather
+ * than a bare constant, so only `PI` is reserved here.
+ */
 enum class BasicConstant(val spelling: String) {
-    PI("PI"),
-    E("E")
+    PI("PI")
 }
 
 /**

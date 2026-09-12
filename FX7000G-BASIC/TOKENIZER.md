@@ -260,7 +260,6 @@ Support the constants already defined by the calculator/BASIC design, such as:
 
 ```
 PI / π
-E
 ```
 
 Use the project's existing representation where possible.
