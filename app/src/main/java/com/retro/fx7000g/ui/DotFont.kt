@@ -1,5 +1,13 @@
 package com.retro.fx7000g.ui
 
+object DisplayGlyphs {
+    const val SHIFT = '\uE000'
+    const val SHIFT_LOCK = '\uE001'
+
+    const val ALPHA = '\uE002'
+    const val ALPHA_LOCK = '\uE003'
+}
+
 /**
  * A compact 5x7 dot-matrix font covering exactly the glyphs the FX-7000G LCD
  * needs to render (digits, operators, the trig/log function names, mode labels
@@ -7,7 +15,6 @@ package com.retro.fx7000g.ui
  * with '#' meaning a lit dot.
  */
 object DotFont {
-
     const val WIDTH = 5
     const val HEIGHT = 7
 
@@ -127,12 +134,18 @@ object DotFont {
 
         // BASIC & PROG glyphs
         '*' to g("     ", " # # ", "  #  ", "#####", "  #  ", " # # ", "     "),
-        '"' to g(" # # ", " # # ", " # # ", "     ", "     ", "     ", "     "),
+        '\u0022' to g(" # # ", " # # ", " # # ", "     ", "     ", "     ", "     "), // "
         '<' to g("   # ", "  #  ", " #   ", "#    ", " #   ", "  #  ", "   # "),
         '>' to g(" #   ", "  #  ", "   # ", "    #", "   # ", "  #  ", " #   "),
         ':' to g("     ", "  ## ", "  ## ", "     ", "  ## ", "  ## ", "     "),
         ';' to g("     ", "  ## ", "  ## ", "     ", "  ## ", "  #  ", " #   "),
-        '$' to g("  #  ", " ####", "# #  ", " ### ", "  # #", "#### ", "  #  ")
+        '$' to g("  #  ", " ####", "# #  ", " ### ", "  # #", "#### ", "  #  "),
+
+        // SHIFT and ALPHA normal and locked indicators
+        DisplayGlyphs.SHIFT to g("     ", "  ## ", " #   ", "  #  ", "   # ", " ##  ", "     "), // SHIFT indicator
+        DisplayGlyphs.SHIFT_LOCK to g("#####", "# ###", "##  #", "# # #", "#  ##", "### #", "#####"), // SHIFT locked indicator
+        DisplayGlyphs.ALPHA to g("     ", "  #  ", " # # ", " ### ", " # # ", " # # ", "     "), // ALPHA indicator
+        DisplayGlyphs.ALPHA_LOCK to g("#####", "# # #", "## ##", "#####", "## ##", "## ##", "#####"), // ALPHA locked indicator
     )
 
     fun glyph(c: Char): Array<String> = glyphs[c] ?: blank

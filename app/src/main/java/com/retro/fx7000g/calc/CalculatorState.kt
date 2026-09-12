@@ -1,10 +1,12 @@
 package com.retro.fx7000g.calc
 
+import android.os.SystemClock
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.retro.fx7000g.basic.ProgState
 import com.retro.fx7000g.basic.ProgSubmode
+import com.retro.fx7000g.ui.DisplayGlyphs
 import kotlin.math.PI
 import kotlin.math.ceil
 import kotlin.math.roundToInt
@@ -57,6 +59,12 @@ class CalculatorState {
         private set
     var alpha by mutableStateOf(false)
         private set
+    /** True while SHIFT is latched on (double press) and survives key presses. */
+    var shiftLock by mutableStateOf(false)
+        private set
+    /** True while ALPHA is latched on (double press) and survives key presses. */
+    var alphaLock by mutableStateOf(false)
+        private set
     var hyp by mutableStateOf(false)
         private set
     var memorySet by mutableStateOf(false)
@@ -104,6 +112,10 @@ class CalculatorState {
     private var yMax = 3.1
     private var yScl = 1.0
 
+    // SHIFT and ALPHA variables to track the last press time for lock detection.
+    private var lastShiftPress = 0L
+    private var lastAlphaPress = 0L
+
     /** True whenever a non-decimal integer base (hex/oct/bin) is active. */
     private val baseMode: Boolean get() = numberBase != 10
 
@@ -148,11 +160,19 @@ class CalculatorState {
             else -> "Dec"
         } else angleMode.label
 
-    /** Small S / A / h prefix flags shown on the LCD status line. */
+    /**
+     * Small S / A / h prefix flags shown on the LCD status line. Each prefix
+     * state owns a dedicated glyph, so a latched SHIFT / ALPHA flag simply swaps
+     * in its locked glyph ([DisplayGlyphs.SHIFT_LOCK] / [DisplayGlyphs.ALPHA_LOCK]).
+     */
     val indicator: String
         get() = buildString {
-            if (shift) append('S')
-            if (alpha || progState?.alphaLock == true) append('A')
+            if (shift) {
+                append(if (shiftLock) DisplayGlyphs.SHIFT_LOCK else DisplayGlyphs.SHIFT)
+            }
+            if (alpha || progState?.alphaLock == true) {
+                append(if (alphaLock) DisplayGlyphs.ALPHA_LOCK else DisplayGlyphs.ALPHA)
+            }
             if (hyp) append('h')
         }
 
@@ -190,9 +210,9 @@ class CalculatorState {
             CalcAction.Evaluate -> evaluate()
             CalcAction.Clear -> clear()
             CalcAction.Delete -> delete()
-            CalcAction.ToggleShift -> { shift = !shift; if (shift) { alpha = false; hyp = false }}
-            CalcAction.ToggleAlpha -> { alpha = !alpha; if (alpha) { shift = false; hyp = false }}
-            CalcAction.ToggleHyp -> { hyp = !hyp; if (hyp) { shift = false; alpha = false }}
+            CalcAction.ToggleShift -> toggleShift()
+            CalcAction.ToggleAlpha -> toggleAlpha()
+            CalcAction.ToggleHyp -> toggleHyp()
             is CalcAction.CycleMode -> cycleMode(action.target)
             CalcAction.MemoryAdd -> memoryAdd()
             CalcAction.MemorySubtract -> memorySubtract()
@@ -220,11 +240,104 @@ class CalculatorState {
             action == CalcAction.ToggleAlpha ||
             action == CalcAction.ToggleHyp
         ) return
-        shift = false
-        if (progState?.alphaLock != true) {
+        // A latched (double-pressed) prefix stays active until SHIFT or ALPHA is
+        // pressed again; otherwise the one-shot prefix is consumed here.
+        if (!shiftLock) shift = false
+        if (!alphaLock && progState?.alphaLock != true) {
             alpha = false
         }
         hyp = false
+    }
+
+    /** Drops a latched SHIFT / ALPHA prefix (used when leaving CALC mode). */
+    private fun clearPrefixLocks() {
+        shiftLock = false
+        alphaLock = false
+    }
+
+    /**
+     * CALC-mode SHIFT. The first press arms the one-shot prefix; pressing it a
+     * second time within 600 ms latches it so it survives the following key presses (the S
+     * indicator switches to its locked glyph). A later press of either SHIFT or
+     * ALPHA releases the lock.
+     */
+    private fun toggleShift() {
+        val now = SystemClock.uptimeMillis()
+
+        when {
+            shiftLock -> {
+                // SHIFT LOCK → SHIFT = unlock
+                shiftLock = false
+                shift = false
+                lastShiftPress = 0L
+            }
+
+            shift && now - lastShiftPress <= 600L -> {
+                // Second press within 600 ms → latch
+                shiftLock = true
+                lastShiftPress = 0L
+            }
+
+            shift -> {
+                // Second press after 600 ms → cancel SHIFT
+                shift = false
+                lastShiftPress = 0L
+            }
+
+            else -> {
+                // First press → activate SHIFT
+                shift = true
+                alpha = false
+                alphaLock = false
+                hyp = false
+                lastShiftPress = now
+            }
+        }
+    }
+
+    /** CALC-mode ALPHA; the counterpart of [toggleShift]. */
+    private fun toggleAlpha() {
+        val now = SystemClock.uptimeMillis()
+
+        when {
+            alphaLock -> {
+                // ALPHA LOCK → ALPHA = unlock
+                alphaLock = false
+                alpha = false
+                lastAlphaPress = 0L
+            }
+
+            alpha && now - lastAlphaPress <= 600L -> {
+                // Second press within 600 ms → latch
+                alphaLock = true
+                lastAlphaPress = 0L
+            }
+
+            alpha -> {
+                // Second press after 600 ms → cancel ALPHA
+                alpha = false
+                lastAlphaPress = 0L
+            }
+
+            else -> {
+                // First press → activate ALPHA
+                alpha = true
+                shift = false
+                shiftLock = false
+                hyp = false
+                lastAlphaPress = now
+            }
+        }
+    }
+
+    private fun toggleHyp() {
+        hyp = !hyp
+        if (hyp) {
+            shift = false
+            shiftLock = false
+            alpha = false
+            alphaLock = false
+        }
     }
 
 
@@ -590,6 +703,7 @@ class CalculatorState {
 
     private fun openPresets() {
         presetMenu = true
+        clearPrefixLocks()
     }
 
     private fun handlePresetMenu(action: CalcAction) {
@@ -689,6 +803,7 @@ class CalculatorState {
     private fun enterRange() {
         rangeMode = true
         enterField(0)
+        clearPrefixLocks()
     }
 
     private fun enterField(i: Int) {
@@ -781,6 +896,7 @@ class CalculatorState {
     private fun openModeMenu() {
         modeMenu = true
         modePrompt = 0
+        clearPrefixLocks()
     }
 
     private fun handleModeMenu(action: CalcAction) {

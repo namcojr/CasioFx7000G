@@ -141,6 +141,8 @@ private fun buildBuffer(
     var rightCol = 16
     if (memorySet) { drawText(buf, "M", 15, 0); rightCol = 15 }
     if (indicator.isNotEmpty()) {
+        // Each prefix state maps to a single dedicated glyph (S, inverted S for
+        // the lock, A, ...), so the run is sized directly by its length.
         val startCol = (rightCol - indicator.length).coerceAtLeast(0)
         drawText(buf, indicator, startCol, 0)
     }

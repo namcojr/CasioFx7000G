@@ -76,4 +76,21 @@ class DotFontTest {
             }
         }
     }
+
+    @Test
+    fun shiftAndAlphaIndicatorGlyphsAreMapped() {
+        // The four status-line prefix glyphs (SHIFT, SHIFT_LOCK, ALPHA,
+        // ALPHA_LOCK) must each resolve to a lit 5x7 glyph.
+        for (c in listOf(
+            DisplayGlyphs.SHIFT, DisplayGlyphs.SHIFT_LOCK,
+            DisplayGlyphs.ALPHA, DisplayGlyphs.ALPHA_LOCK
+        )) {
+            val glyph = DotFont.glyph(c)
+            assertEquals("row count for '$c'", DotFont.HEIGHT, glyph.size)
+            assertTrue("glyph for '$c' should be lit", glyph.any { it.contains('#') })
+            for (row in glyph) {
+                assertEquals("col count for '$c'", DotFont.WIDTH, row.length)
+            }
+        }
+    }
 }

@@ -652,7 +652,8 @@ pdf.body(
 pdf.bullet("SHIFT selects the function printed in orange above a key. Example: SHIFT then the sin key gives sin" + INV + " (arc-sine).")
 pdf.bullet("ALPHA selects the red letter printed below a key, so you can enter the variables A through Z.")
 pdf.bullet("hyp turns the sin / cos / tan keys into the hyperbolic functions sinh, cosh and tanh. Press SHIFT before hyp to reach the inverse hyperbolics sinh" + INV + ", cosh" + INV + " and tanh" + INV + ".")
-pdf.note("SHIFT and ALPHA are mutually exclusive \u2014 turning one on turns the other off. Pressing a prefix a second time cancels it.")
+pdf.bullet("Press SHIFT or ALPHA twice in a row to lock the prefix. A locked prefix stays on for every following key, and its indicator is drawn in reverse video (an inverted S or A). Press SHIFT or ALPHA once more to release the lock.")
+pdf.note("SHIFT and ALPHA are mutually exclusive \u2014 turning one on turns the other off. A single press of a prefix that is already on locks it; pressing either prefix again releases the lock.")
 
 pdf.start_section("1-3  The display", level=1)
 pdf.h2("1-3  The display")
@@ -1195,7 +1196,8 @@ pdf.start_section("Appendix A  Key Reference", level=0)
 pdf.idx("key reference")
 pdf.body(
     "Every key with its primary function and its SHIFT (orange) and ALPHA (red) "
-    "legends. Prefix keys (SHIFT, ALPHA, hyp) are one-shot.")
+    "legends. Prefix keys (SHIFT, ALPHA, hyp) are one-shot; double-press SHIFT or "
+    "ALPHA to lock the prefix until either of them is pressed again.")
 
 key_rows = [
     ("SHIFT", "select orange legend", "\u2014"),

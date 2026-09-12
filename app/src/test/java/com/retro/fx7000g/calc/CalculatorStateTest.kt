@@ -1,6 +1,7 @@
 package com.retro.fx7000g.calc
 
 import com.retro.fx7000g.basic.ProgSubmode
+import com.retro.fx7000g.ui.DisplayGlyphs
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -242,7 +243,7 @@ class CalculatorStateTest {
         val s = state()
         s.onAction(CalcAction.ToggleShift)
         assertTrue(s.shift)
-        assertEquals("S", s.indicator)
+        assertEquals(DisplayGlyphs.SHIFT.toString(), s.indicator)
     }
 
     @Test
@@ -260,7 +261,7 @@ class CalculatorStateTest {
         s.onAction(CalcAction.ToggleAlpha)
         assertFalse(s.shift)
         assertTrue(s.alpha)
-        assertEquals("A", s.indicator)
+        assertEquals(DisplayGlyphs.ALPHA.toString(), s.indicator)
     }
 
     @Test
@@ -270,7 +271,7 @@ class CalculatorStateTest {
         s.onAction(CalcAction.ToggleShift)
         assertFalse(s.alpha)
         assertTrue(s.shift)
-        assertEquals("S", s.indicator)
+        assertEquals(DisplayGlyphs.SHIFT.toString(), s.indicator)
     }
 
     @Test
@@ -279,6 +280,107 @@ class CalculatorStateTest {
         s.onAction(CalcAction.ToggleHyp)
         assertTrue(s.hyp)
         assertEquals("h", s.indicator)
+    }
+
+    @Test
+    fun doublePressShiftLatchesShift() {
+        val s = state()
+        s.onAction(CalcAction.ToggleShift)
+        s.onAction(CalcAction.ToggleShift)
+        assertTrue(s.shift)
+        assertTrue(s.shiftLock)
+        assertEquals(DisplayGlyphs.SHIFT_LOCK.toString(), s.indicator)
+    }
+
+    @Test
+    fun latchedShiftSurvivesKeyPresses() {
+        val s = state()
+        s.onAction(CalcAction.ToggleShift)
+        s.onAction(CalcAction.ToggleShift)
+        s.onAction(ins("1"))
+        s.onAction(ins("2"))
+        assertTrue(s.shift)
+        assertTrue(s.shiftLock)
+        assertEquals(DisplayGlyphs.SHIFT_LOCK.toString(), s.indicator)
+    }
+
+    @Test
+    fun latchedShiftReleasedByShiftPress() {
+        val s = state()
+        s.onAction(CalcAction.ToggleShift)
+        s.onAction(CalcAction.ToggleShift)
+        s.onAction(CalcAction.ToggleShift)
+        assertFalse(s.shift)
+        assertFalse(s.shiftLock)
+        assertEquals("", s.indicator)
+    }
+
+    @Test
+    fun latchedShiftReleasedByAlphaPress() {
+        val s = state()
+        s.onAction(CalcAction.ToggleShift)
+        s.onAction(CalcAction.ToggleShift)
+        s.onAction(CalcAction.ToggleAlpha)
+        assertFalse(s.shift)
+        assertFalse(s.shiftLock)
+        assertTrue(s.alpha)
+        assertFalse(s.alphaLock)
+        assertEquals(DisplayGlyphs.ALPHA.toString(), s.indicator)
+    }
+
+    @Test
+    fun doublePressAlphaLatchesAlpha() {
+        val s = state()
+        s.onAction(CalcAction.ToggleAlpha)
+        s.onAction(CalcAction.ToggleAlpha)
+        assertTrue(s.alpha)
+        assertTrue(s.alphaLock)
+        assertEquals(DisplayGlyphs.ALPHA_LOCK.toString(), s.indicator)
+    }
+
+    @Test
+    fun latchedAlphaSurvivesKeyPresses() {
+        val s = state()
+        s.onAction(CalcAction.ToggleAlpha)
+        s.onAction(CalcAction.ToggleAlpha)
+        s.onAction(ins("7"))
+        assertTrue(s.alpha)
+        assertTrue(s.alphaLock)
+        assertEquals(DisplayGlyphs.ALPHA_LOCK.toString(), s.indicator)
+    }
+
+    @Test
+    fun latchedAlphaReleasedByShiftPress() {
+        val s = state()
+        s.onAction(CalcAction.ToggleAlpha)
+        s.onAction(CalcAction.ToggleAlpha)
+        s.onAction(CalcAction.ToggleShift)
+        assertFalse(s.alpha)
+        assertFalse(s.alphaLock)
+        assertTrue(s.shift)
+        assertFalse(s.shiftLock)
+    }
+
+    @Test
+    fun hypPressDropsLatchedPrefixes() {
+        val s = state()
+        s.onAction(CalcAction.ToggleShift)
+        s.onAction(CalcAction.ToggleShift)
+        s.onAction(CalcAction.ToggleHyp)
+        assertFalse(s.shift)
+        assertFalse(s.shiftLock)
+        assertTrue(s.hyp)
+        assertEquals("h", s.indicator)
+    }
+
+    @Test
+    fun openingModeMenuDropsLatchedShift() {
+        val s = state()
+        s.onAction(CalcAction.ToggleShift)
+        s.onAction(CalcAction.ToggleShift)
+        s.onAction(CalcAction.OpenModeMenu)
+        assertFalse(s.shift)
+        assertFalse(s.shiftLock)
     }
     // endregion
 
@@ -776,7 +878,7 @@ class CalculatorStateTest {
 
         // Typing a character does not reset alpha when alphaLock is active
         s.onAction(ins("A"))
-        assertEquals("A", s.indicator) // indicator retains 'A'
+        assertEquals(DisplayGlyphs.ALPHA.toString(), s.indicator) // indicator retains the alpha flag
     }
 
     @Test
