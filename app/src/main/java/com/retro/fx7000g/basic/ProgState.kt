@@ -3,6 +3,7 @@ package com.retro.fx7000g.basic
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.retro.fx7000g.basic.memory.Fx7000gMemory
 import com.retro.fx7000g.calc.DisplayTokens
 
 enum class ProgSubmode {
@@ -15,7 +16,9 @@ enum class ProgSubmode {
  * Encapsulates the runtime, editor, and selection state for the FX-7000G PROG environment.
  */
 class ProgState(
-    val store: ProgramStore = ProgramStore()
+    val store: ProgramStore = ProgramStore(),
+    /** Finite virtual RAM shared by the program, variable and runtime subsystems. */
+    val memory: Fx7000gMemory = Fx7000gMemory()
 ) {
     var submode by mutableStateOf(ProgSubmode.SELECT)
     var selectedSlot by mutableStateOf(0)
@@ -123,5 +126,14 @@ class ProgState(
             }
         }
     }
+
+    /**
+     * Free program/DATA memory for the PROG status area, e.g. `21456 Free`.
+     *
+     * The value comes from the authoritative [Fx7000gMemory] model. Until
+     * `ProgramStore` allocates program lines from it (a later phase) this reports
+     * the full capacity.
+     */
+    fun freeMemoryLabel(): String = "${memory.freeProgramDataBytes()} Free"
 }
 

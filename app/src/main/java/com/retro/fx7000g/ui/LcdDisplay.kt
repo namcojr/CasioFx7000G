@@ -63,7 +63,7 @@ fun LcdDisplay(
         presetLines, indicator, traceCol, traceRow, traceText, progState,
         progState?.submode, progState?.selectedSlot, progState?.editBuffer,
         progState?.editCursor, progState?.scrollLineIdx, progState?.runLines?.size,
-        progState?.runHalted
+        progState?.runHalted, progState?.memory?.freeProgramDataBytes()
     ) {
         when {
             // The MODE menu overlays the current environment (it can be opened
@@ -263,7 +263,7 @@ private fun buildProgSelectBuffer(prog: ProgState): BooleanArray {
     val buf = BooleanArray(COLS * ROWS)
     drawText(buf, "PRG", col = 0, charRow = 0)
     drawText(buf, prog.store.occupiedMask(), col = 4, charRow = 0)
-    drawText(buf, "32768K Free", col = 0, charRow = 2)
+    drawText(buf, prog.freeMemoryLabel(), col = 0, charRow = 2)
     return buf
 }
 

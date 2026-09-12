@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.retro.fx7000g.basic.ProgState
 import com.retro.fx7000g.basic.ProgSubmode
+import com.retro.fx7000g.basic.memory.Fx7000gMemory
 import com.retro.fx7000g.ui.DisplayGlyphs
 import kotlin.math.PI
 import kotlin.math.ceil
@@ -84,6 +85,8 @@ class CalculatorState {
     var presetMenu by mutableStateOf(false)
         private set
     val progStore = com.retro.fx7000g.basic.ProgramStore()
+    /** The single finite virtual RAM shared by the BASIC environment. */
+    val basicMemory = Fx7000gMemory()
     var progState by mutableStateOf<ProgState?>(null)
         private set
 
@@ -936,7 +939,7 @@ class CalculatorState {
             '6' -> { displayFormat = NumberFormatter.DisplayFormat.Norm; closeModeMenu() }
             '7' -> {
                 closeModeMenu()
-                if (progState == null) progState = ProgState(progStore)
+                if (progState == null) progState = ProgState(progStore, basicMemory)
                 else progState?.submode = ProgSubmode.SELECT
             }
             '8' -> {
